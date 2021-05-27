@@ -1,0 +1,55 @@
+{
+    "extends": "tslint:latest",
+    "rules": {
+        "max-line-length": {
+            "options": [120]
+        },
+        "new-parens": true,
+        "no-arg": true,
+        "no-bitwise": true,
+        "no-conditional-assignment": true,
+        "no-consecutive-blank-lines": false,
+        "no-inferrable-types": true,
+        "prefer-template": false,
+        "no-default-export": false,
+        "variable-name": false,
+        "match-default-export-name": false,
+        "typedef":false,
+        "completed-docs":false,
+        "member-access":true,
+        "no-unbound-method":false,
+        "no-unsafe-any":false,
+        "no-any":false,
+        "file-name-casing": [true, "pascal-case", "camel-case"],
+        "await-promise":false,
+        "member-ordering":false,
+        "strict-boolean-expressions":false,
+        "prefer-function-over-method":false,
+        "comment-format":false,
+        "no-default-import":false,
+        "switch-default":false,
+        "cyclomatic-complexity":false,
+        "no-magic-numbers":false,
+        "increment-decrement":false,
+        "no-null-keyword":false,
+        "no-unnecessary-class":false,
+        "no-async-without-await":false,
+        "object-literal-key-quotes":false,
+        "no-implicit-dependencies":false,
+        "no-for-in":false,
+        "no-import-side-effect":false,
+        "no-floating-promises":false,
+        "prefer-readonly":false,
+        "updatedPlayer":false,
+        "max-file-line-count":false,
+        "no-console": {
+            "severity": "warning",
+            "options": ["debug", "info", "log", "time", "timeEnd", "trace"]
+        }
+    },
+    "jsRules": {
+        "max-line-length": {
+            "options": [120]
+        }
+    }
+}
