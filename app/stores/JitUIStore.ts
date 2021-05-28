@@ -1,15 +1,15 @@
 import { computed, observable, action } from 'mobx';
 import { BaseStore, bind } from '../framework';
-import GankStore from './GankStore';
+import GankStore from './JitStore';
 import { GankType } from '../constants';
 import { GankDataCache, JitDriverCache } from '../types';
 
 export default class JitUIStore extends BaseStore {
   @observable
-  showMenu = false;
+  public showMenu = false;
 
   @observable
-  currentType: GankType = GankType.All;
+  public currentType: GankType = GankType.All;
 
   @computed
   get dataCache (): GankDataCache {
@@ -18,7 +18,7 @@ export default class JitUIStore extends BaseStore {
       dataCache = this.jitStore.dataCache.get(this.currentType);
     }
     if (!dataCache) {
-      dataCache = {data: [], currentPage: 0};
+      dataCache = { data: [], currentPage: 0 };
     }
 
     return dataCache;
@@ -38,17 +38,17 @@ export default class JitUIStore extends BaseStore {
   }
 
   @computed
-  get data () {
-    return this.dataCache.data;
+  get data() {
+    return this.driverCache.data;
   }
 
   @computed
-  get loading () {
-    return this.jitStore ? this.jitStore.dataCacheLoading : false;
+  get loading() {
+    return this.jitStore ? this.jitStore.driverCacheLoading : false;
   }
 
   @action('切换干货类型')
-  switchGankType (type: GankType) {
+  public switchGankType (type: GankType) {
     if (this.showMenu) {
       this.showMenu = false;
     }
@@ -57,17 +57,17 @@ export default class JitUIStore extends BaseStore {
   }
 
   @bind
-  loadNextPage() {
+  public loadNextPage() {
     return this.jitStore.loadNextPageOfType(this.currentType);
   }
 
   @bind
-  driverLogin(phone: string) {
+  public driverLogin(phone: string) {
     return this.jitStore.loadDriverLoginType(phone);
   }
 
   @action('切换菜单展示或隐藏')
-  switchMenuShow(show: boolean) {
+  public switchMenuShow(show: boolean) {
     this.showMenu = show;
   }
 

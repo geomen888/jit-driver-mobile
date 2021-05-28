@@ -7,6 +7,7 @@
 import React from "react"
 import { createStackNavigator } from "@react-navigation/stack"
 import { WelcomeScreen, DemoScreen, DemoListScreen } from "../screens"
+import { observer } from "mobx-react-lite"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -29,7 +30,7 @@ export type PrimaryParamList = {
 // Documentation: https://reactnavigation.org/docs/stack-navigator/
 const Stack = createStackNavigator<PrimaryParamList>()
 
-export function MainNavigator() {
+export const MainNavigator = observer(() => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -41,7 +42,7 @@ export function MainNavigator() {
       <Stack.Screen name="demoList" component={DemoListScreen} />
     </Stack.Navigator>
   )
-}
+})
 
 /**
  * A list of routes from which we're allowed to leave the app when

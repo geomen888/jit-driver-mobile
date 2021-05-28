@@ -1,6 +1,6 @@
 import { BaseStore } from '../framework';
-import JitStore from './GankStore';
-import JitUIStore from './GankUIStore';
+import JitStore from './JitStore';
+import JitUIStore from './JitUIStore';
 // import { location } from '../constants';
 import { PROTOCOL as protocol } from "@env";
 

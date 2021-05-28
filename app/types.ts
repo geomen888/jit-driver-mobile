@@ -9,7 +9,7 @@ export interface GankDataCache {
 }
 
 export interface JitDriverCache {
-  data: IDriverItem[];
+  data: IDriverItem[] | IToken[];
 }
 
 export interface GankApiResponse<T> {

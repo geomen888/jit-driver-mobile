@@ -23,4 +23,5 @@ export interface WssCallWithConfig {
 export interface ActionWithPayload<T = any> {
   type: string;
   payload?: T;
+  // [name: string]: any;
 }

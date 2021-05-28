@@ -1,10 +1,17 @@
+import Debug from 'debug';
+import { DEBUG } from '@env';
 import { ActionWithPayload } from './types';
 import { runSaga, END } from 'redux-saga';
 
+
+const debug = Debug('SagaRunner:');
+const error = Debug('SagaRunner:error:');
+
+debug.enabled = DEBUG || false;
+error.enabled = DEBUG || false;
 type Callback = (cb: (ActionWithPayload | END)) => void;
 
 class SagaRunner {
-  
   private subscribes: Callback[] = [];
   private stores: {[name: string]: any} = {};
 
@@ -14,29 +21,30 @@ class SagaRunner {
     this.runSaga = this.runSaga.bind(this);
   }
 
-  dispatch (action: ActionWithPayload): ActionWithPayload {
+  dispatch(action: ActionWithPayload): ActionWithPayload {
     const arr = this.subscribes.slice();
+    debug('dispatch:arr::', arr);
     for (let i = 0, len =  arr.length; i < len; i++) {
       arr[i](action);
     }
 
+    debug('dispatch:action::', action);
+
     return action;
   }
-  
-  runSaga(saga: () => Iterator<any>) {
-    // any, ActionWithPayload
-    // () => void, ActionWithPayload,() => Iterator<any>
-    return runSaga(
+
+  public runSaga(saga: () => Iterator<any>) {
+    return runSaga<ActionWithPayload, any>(
       {
         subscribe: this.subscribe,
         dispatch: this.dispatch,
         getState: () => this.stores
-      } as any,
+      },
       saga
     );
   }
 
-  registerStore (key: string, store: any) {
+  registerStore(key: string, store: any) {
     if (this.stores[key]) {
       throw new Error('Error-key: ' + key);
     }

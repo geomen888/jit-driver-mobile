@@ -131,6 +131,7 @@ export default class BaseStore {
   }
 
   public dispatch(action: ActionWithPayload) {
+    debug('dispatch::', action);
     return this.sagaRunner.dispatch(action);
   }
 
