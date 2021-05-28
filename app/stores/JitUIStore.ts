@@ -31,7 +31,7 @@ export default class JitUIStore extends BaseStore {
       driverCache = this.jitStore.driversCache.get('iam');
     }
     if (!driverCache) {
-      driverCache = { data: {} };
+      driverCache = { data: [], isAuthenticated: false };
     }
 
     return driverCache;
@@ -41,6 +41,7 @@ export default class JitUIStore extends BaseStore {
   get data() {
     return this.driverCache.data;
   }
+
 
   @computed
   get loading() {

@@ -126,11 +126,18 @@ export const WelcomeScreen: FunctionComponent<PropsWithChildren<IScreenProps>> =
        // jit.loadNextPage()
        debug('login::', JSON.parse(JSON.stringify(jit.driverCache)));
        setText('');
-       nextScreen();
       } catch (e) {
         error(e);
       }
     }
+
+    useLayoutEffect(() => {
+      debug('useLayoutEffect:driverCache::', jit.driverCache)
+      const cache = JSON.parse(JSON.stringify(jit.driverCache))
+      if (cache.isAuthenticated) {
+        nextScreen();
+      }
+    }, [jit.driverCache, jit.loading])
 
     return (
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>

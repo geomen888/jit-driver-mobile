@@ -10,6 +10,7 @@ export interface GankDataCache {
 
 export interface JitDriverCache {
   data: IDriverItem[] | IToken[];
+  isAuthenticated?: boolean;
 }
 
 export interface GankApiResponse<T> {

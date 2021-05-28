@@ -148,13 +148,13 @@ export default class JitStore extends BaseStore {
       debug('handleDriverLoginRequest:driversCache::', JSON.stringify(self.driversCache));
 
       if (!self.driversCache.has(type)) {
-        self.driversCache.set(type, { data: [] });
+        self.driversCache.set(type, { data: [], isAuthenticated: false  });
       }
       self.driverCacheLoading = true;
     });
 
     debug('handleDriverLoginRequest:type::', type);
-    const cache = (self.driversCache.get(type) as unknown) as { data: IToken[] };
+    const cache = (self.driversCache.get(type) as unknown) as { data: IToken[], isAuthenticated: boolean };
 
     yield put({ type: JitStore.GET_DRIVER_LOGIN_TYPE.REQUEST, payload: { phone } });
 
@@ -166,8 +166,9 @@ export default class JitStore extends BaseStore {
 
     yield call<any>(runInAction, () => {
       debug('handleDriverLoginRequest:res::', res);
-
       cache.data = cache.data.concat(res.data);
+      cache.isAuthenticated = true;
+      self.driversCache.set('iam', { data: cache.data, isAuthenticated: true })
       self.driverCacheLoading = false;
     });
   }
