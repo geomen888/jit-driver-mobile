@@ -45,16 +45,16 @@ export const DemoListScreen = observer(function DemoListScreen() {
   const navigation = useNavigation()
   const goBack = () => navigation.goBack()
 
-  const { characterStore } = useStores()
-  const { characters } = characterStore
+  // const { driverStore } = useStores()
+  // const { drivers } = driverStore
 
-  useEffect(() => {
-    async function fetchData() {
-      await characterStore.getCharacters()
-    }
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     await driverStore.getDrivers()
+  //   }
 
-    fetchData()
-  }, [])
+  //   fetchData()
+  // }, [])
 
   return (
     <View testID="DemoListScreen" style={FULL}>
@@ -69,7 +69,8 @@ export const DemoListScreen = observer(function DemoListScreen() {
         />
         <FlatList
           contentContainerStyle={FLAT_LIST}
-          data={[...characters]}
+          // data={[...drivers]}
+          data={[]}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={LIST_CONTAINER}>

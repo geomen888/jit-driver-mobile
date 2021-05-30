@@ -19,6 +19,15 @@
     "ios": {
       "supportsTablet": true
     },
+     "android": {
+      "package": "ua.com.jit",
+      "googleServicesFile": "./jit-taxi-059a1268829d.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB0swrr9GhmR8LlyuQ5UP5JcL5W_T4MP-c"
+        }
+      }
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     }

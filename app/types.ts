@@ -13,6 +13,11 @@ export interface JitDriverCache {
   isAuthenticated?: boolean;
 }
 
+export interface JitProfileCache {
+  data: IToken;
+  isAuthenticated: boolean;
+}
+
 export interface GankApiResponse<T> {
   category?: GankType[];
   error: boolean;
@@ -48,7 +53,6 @@ export interface IDriverItem {
   reg: string;
   name: string;
   createdAt: DateString;
-  publishedAt: DateString;
 }
 
 export interface IToken {

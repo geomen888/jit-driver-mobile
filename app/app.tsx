@@ -13,10 +13,16 @@ import "./i18n"
 import "./utils/ignore-warnings"
 import React, { useState, useEffect, useRef } from "react"
 import { Provider } from 'mobx-react';
+import { BaseStore } from './framework';
 import { NavigationContainerRef } from "@react-navigation/native"
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context"
 import { initFonts } from "./theme/fonts" // expo
-import { jitUIStore } from './stores';
+import JitUIStore from './stores/JitUIStore';
+import JitStore from './stores/JitStore';
+
+import { PROTOCOL as protocol } from "@env";
+
+
 import * as storage from "./utils/storage"
 import {
   useBackButtonHandler,
@@ -36,12 +42,20 @@ enableScreens()
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
+BaseStore.init({
+  axiosConfig: {
+   baseURL: protocol + '//ucdbj810se.execute-api.eu-central-1.amazonaws.com/dev'
+  }
+});
 /**
  * This is the root component of our app.
  */
+const  jitStore = new JitStore('_jit');
+const  jitUIStore = new JitUIStore('jit', jitStore);
+
 function App() {
   const navigationRef = useRef<NavigationContainerRef>()
-  // const [rootStore, setRootStore] = useState<RootStore | undefined>(undefined)
+  // const [rootStore, setRootStore] = useState<JitUIStore | undefined>(undefined)
 
   setRootNavigation(navigationRef)
   useBackButtonHandler(navigationRef, canExit)
@@ -54,8 +68,15 @@ function App() {
   useEffect(() => {
     (async () => {
       await initFonts() // expo
-      // setupRootStore().then(setRootStore)
+      // setupRootStore().then(store => {
+      //   if (!rootStore) {
+      //     const  jitStore = new JitStore('_jit');
+      //     const  jitUIStore = new JitUIStore('jit', jitStore);
+      //     setRootStore(jitUIStore)
+      //   }
+      //   })
     })()
+    // setRootStore(jitUIStore)
   }, [])
 
   // Before we show the app, we have to wait for our state to be ready.
@@ -70,7 +91,7 @@ function App() {
     //   <RootStoreProvider value={rootStore}>
      <Provider jit={jitUIStore}>
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <RootNavigator
+        <RootNavigator
             ref={navigationRef}
             initialState={initialNavigationState}
             onStateChange={onNavigationStateChange}

@@ -1,4 +1,4 @@
-import React, { useState, FunctionComponent, PropsWithChildren, useLayoutEffect } from "react";
+import React, { useState, FunctionComponent, PropsWithChildren, useEffect,  useLayoutEffect } from "react";
 import Debug from 'debug';
 import { DEBUG } from '@env';
 import {
@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   Keyboard,
+
   TextInput
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
@@ -17,7 +18,12 @@ import { observer } from "mobx-react-lite"
 import { inject } from 'mobx-react';
 import { Button, Header, Screen, Text, Wallpaper } from "../../components"
 import { color, spacing, typography } from "../../theme"
+// import { Util } from '../../utils';
 import JitUIStore from '../../stores/JitUIStore';
+
+
+// import { LoadingSatatus } from '../../common/enums/profile-loading-status.type';
+
 const bowserLogo = require("./bowser.png")
 
 const debug = Debug('welcomeScreen:');
@@ -118,26 +124,31 @@ export const WelcomeScreen: FunctionComponent<PropsWithChildren<IScreenProps>> =
     const navigation = useNavigation()
     const nextScreen = () => navigation.navigate("demo")
     const [text, setText] = useState('')
-
+    // const { profileCache = {}, ProfileLoading = LoadingSatatus.IDLE } = jit
     const login = () => {
       try {
        debug('phone::', text);
+      // const driverCache = Util.dtoToJson(jit.driverCache);
        jit.driverLogin(text);
        // jit.loadNextPage()
-       debug('login::', JSON.parse(JSON.stringify(jit.driverCache)));
+       debug('login::', jit.driverCache);
        setText('');
       } catch (e) {
         error(e);
       }
     }
 
-    useLayoutEffect(() => {
-      debug('useLayoutEffect:driverCache::', jit.driverCache)
-      const cache = JSON.parse(JSON.stringify(jit.driverCache))
-      if (cache.isAuthenticated) {
+    useEffect(() => {
+      // if (!jit || !jit.driverCache) {
+      //   return
+      // }
+      debug('useLayoutEffect:driverCache::', jit.driverCache);
+      debug('useLayoutEffect:ProfileLoading::', jit.loading)
+      // const cache = Util.dtoToJson(jit.driverCache)
+      if (jit.driverCache.isAuthenticated) {
         nextScreen();
       }
-    }, [jit.driverCache, jit.loading])
+    }, [(jit && jit.driverCache), (jit && jit.loading)])
 
     return (
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -159,6 +170,7 @@ export const WelcomeScreen: FunctionComponent<PropsWithChildren<IScreenProps>> =
               value={text}
               onChangeText={setText}
             />
+            
             {/* <Text style={CONTENT}>
           This probably isn't what your app is going to look like. Unless your designer handed you
           this screen and, in that case, congrats! You're ready to ship.
@@ -185,6 +197,7 @@ export const WelcomeScreen: FunctionComponent<PropsWithChildren<IScreenProps>> =
   }));
 
 
-// WelcomeScreen.wrappedComponent.propTypes = {
+// WelcomeScreen.wrappedomponent.propTypes = {
 //   jit: PropTypes.object
 // }
+

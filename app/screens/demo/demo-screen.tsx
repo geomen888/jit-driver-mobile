@@ -1,13 +1,26 @@
 import React from "react"
-import { Image, ImageStyle, Platform, TextStyle, View, ViewStyle } from "react-native"
+import {
+  Image,
+   ImageStyle, Platform, TextStyle, View, ViewStyle,   StyleSheet,
+   Dimensions, } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { BulletItem, Button, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
 import { Api } from "../../services/api"
 import { save } from "../../utils/storage"
 export const logoIgnite = require("./logo-ignite.png")
 export const heart = require("./heart.png")
+
+
+const { width, height } = Dimensions.get('window');
+
+const ASPECT_RATIO = width / height;
+const LATITUDE = 37.78825;
+const LONGITUDE = -122.4324;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 const FULL: ViewStyle = { flex: 1 }
 const CONTAINER: ViewStyle = {
@@ -64,6 +77,17 @@ const LOVE: TextStyle = {
   fontSize: 15,
   lineHeight: 22,
 }
+
+const MapRootStyle: ViewStyle = {
+ flex: 1
+}
+
+const MapViewGoogle: ViewStyle = {
+  backgroundColor: 'green',
+  height: 100,
+  justifyContent: 'center',
+  alignItems: 'center'
+}
 const HEART: ImageStyle = {
   marginHorizontal: spacing[2],
   width: 10,
@@ -86,45 +110,45 @@ export const DemoScreen = observer(function DemoScreen() {
   const navigation = useNavigation()
   const goBack = () => navigation.goBack()
 
-  const demoReactotron = React.useMemo(
-    () => async () => {
-      console.tron.log("Your Friendly tron log message")
-      console.tron.logImportant("I am important")
-      console.tron.display({
-        name: "DISPLAY",
-        value: {
-          numbers: 1,
-          strings: "strings",
-          booleans: true,
-          arrays: [1, 2, 3],
-          objects: {
-            deeper: {
-              deeper: {
-                yay: "👾",
-              },
-            },
-          },
-          functionNames: function hello() {
-            /* dummy function */
-          },
-        },
-        preview: "More control with display()",
-        important: true,
-        image: {
-          uri:
-            "https://avatars2.githubusercontent.com/u/3902527?s=200&u=a0d16b13ed719f35d95ca0f4440f5d07c32c349a&v=4",
-        },
-      })
-      // make an API call for the demo
-      // Don't do API like this, use store's API
-      const demo = new Api()
-      demo.setup()
-      demo.getUser("1")
-      // Let's do some async storage stuff
-      await save("Cool Name", "Boaty McBoatface")
-    },
-    [],
-  )
+  // const demoReactotron = React.useMemo(
+  //   () => async () => {
+  //     console.tron.log("Your Friendly tron log message")
+  //     console.tron.logImportant("I am important")
+  //     console.tron.display({
+  //       name: "DISPLAY",
+  //       value: {
+  //         numbers: 1,
+  //         strings: "strings",
+  //         booleans: true,
+  //         arrays: [1, 2, 3],
+  //         objects: {
+  //           deeper: {
+  //             deeper: {
+  //               yay: "👾",
+  //             },
+  //           },
+  //         },
+  //         functionNames: function hello() {
+  //           /* dummy function */
+  //         },
+  //       },
+  //       preview: "More control with display()",
+  //       important: true,
+  //       image: {
+  //         uri:
+  //           "https://avatars2.githubusercontent.com/u/3902527?s=200&u=a0d16b13ed719f35d95ca0f4440f5d07c32c349a&v=4",
+  //       },
+  //     })
+  //     // make an API call for the demo
+  //     // Don't do API like this, use store's API
+  //     const demo = new Api()
+  //     demo.setup()
+  //     demo.getUser("1")
+  //     // Let's do some async storage stuff
+  //     await save("Cool Name", "Boaty McBoatface")
+  //   },
+  //   [],
+  // )
 
   return (
     <View testID="DemoScreen" style={FULL}>
@@ -137,14 +161,27 @@ export const DemoScreen = observer(function DemoScreen() {
           style={HEADER}
           titleStyle={HEADER_TITLE}
         />
-        <Text style={TITLE} preset="header" tx="demoScreen.title" />
+        <View style={styles.container}>
+          <MapView
+            loadingEnabled={true}
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            initialRegion={{
+              latitude: LATITUDE,
+              longitude: LONGITUDE,
+              latitudeDelta: LATITUDE_DELTA,
+              longitudeDelta: LONGITUDE_DELTA,
+            }}
+          />
+        </View>
+        {/* <Text style={TITLE} preset="header" tx="demoScreen.title" />
         <Text style={TAGLINE} tx="demoScreen.tagLine" />
         <BulletItem text="Integrated here, Navigation with State, TypeScript, Storybook, Solidarity, and i18n." />
         <BulletItem
           text={`To run Storybook, press ${platformCommand} or shake the device to show the developer menu, then select "Toggle Storybook"`}
         />
-        <BulletItem text="Load up Reactotron!  You can inspect your app, view the events, interact, and so much more!" />
-        <View>
+        <BulletItem text="Load up Reactotron!  You can inspect your app, view the events, interact, and so much more!" /> */}
+        {/* <View>
           <Button
             style={DEMO}
             textStyle={DEMO_TEXT}
@@ -152,8 +189,8 @@ export const DemoScreen = observer(function DemoScreen() {
             onPress={demoReactotron}
           />
           <Text style={HINT} tx={`demoScreen.${Platform.OS}ReactotronHint` as const} />
-        </View>
-        <Button
+        </View> */}
+        {/* <Button
           style={DEMO}
           textStyle={DEMO_TEXT}
           tx="demoScreen.demoList"
@@ -164,8 +201,24 @@ export const DemoScreen = observer(function DemoScreen() {
           <Text style={LOVE} text="Made with" />
           <Image source={heart} style={HEART} />
           <Text style={LOVE} text="by Infinite Red" />
-        </View>
+        </View> */}
       </Screen>
     </View>
   )
+})
+
+// DemoScreen.prototype = {
+//   provider: MapView.ProviderPropType,
+// }
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    top: 100,
+  },
+  map: {
+     ...StyleSheet.absoluteFillObject,
+  },
 })
