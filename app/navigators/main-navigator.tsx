@@ -8,7 +8,6 @@ import React from "react"
 import { createStackNavigator } from "@react-navigation/stack"
 import { WelcomeScreen, DemoScreen, DemoListScreen } from "../screens"
 import { observer } from "mobx-react-lite"
-
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
  * as well as what properties (if any) they might take when navigating to them.
@@ -29,6 +28,7 @@ export type PrimaryParamList = {
 
 // Documentation: https://reactnavigation.org/docs/stack-navigator/
 const Stack = createStackNavigator<PrimaryParamList>()
+
 
 export const MainNavigator = observer(() => {
   return (

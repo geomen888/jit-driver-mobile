@@ -14,5 +14,5 @@ export enum GankType {
 
 
 export const location = {
-  protocol: protocol
+  protocol
 }

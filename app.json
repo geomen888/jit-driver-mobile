@@ -5,8 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "sdkVersion": "41.0.0",
+    "platforms": [ "android" ],
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/JIT.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,7 +23,12 @@
     },
      "android": {
       "package": "ua.com.jit",
-      "googleServicesFile": "./jit-taxi-059a1268829d.json",
+      "googleServicesFile": "./google-services.json",
+        "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ],
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyB0swrr9GhmR8LlyuQ5UP5JcL5W_T4MP-c"

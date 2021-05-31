@@ -1,0 +1,157 @@
+May 31 13:58:21 turtle[76704] ERROR: [31mError: connect ECONNREFUSED 127.0.0.1:8000[39m
+[31m    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1144:16) {[39m
+[31m  errno: 'ECONNREFUSED',[39m
+[31m  code: 'ECONNREFUSED',[39m
+[31m  syscall: 'connect',[39m
+[31m  address: '127.0.0.1',[39m
+[31m  port: 8000,[39m
+[31m  config: {[39m
+[31m    url: 'https://127.0.0.1:8000/dist/android-index.json',[39m
+[31m    method: 'get',[39m
+[31m    headers: {[39m
+[31m      Accept: 'application/expo+json,application/json',[39m
+[31m      'Exponent-SDK-Version': '41.0.0',[39m
+[31m      'Exponent-Platform': 'android',[39m
+[31m      'Expo-Release-Channel': 'default',[39m
+[31m      'User-Agent': 'axios/0.21.1'[39m
+[31m    },[39m
+[31m    transformRequest: [ [Function: transformRequest] ],[39m
+[31m    transformResponse: [ [Function: transformResponse] ],[39m
+[31m    timeout: 0,[39m
+[31m    adapter: [Function: httpAdapter],[39m
+[31m    xsrfCookieName: 'XSRF-TOKEN',[39m
+[31m    xsrfHeaderName: 'X-XSRF-TOKEN',[39m
+[31m    maxContentLength: -1,[39m
+[31m    maxBodyLength: -1,[39m
+[31m    validateStatus: [Function: validateStatus],[39m
+[31m    data: undefined[39m
+[31m  },[39m
+[31m  request: Writable {[39m
+[31m    _writableState: WritableState {[39m
+[31m      objectMode: false,[39m
+[31m      highWaterMark: 16384,[39m
+[31m      finalCalled: false,[39m
+[31m      needDrain: false,[39m
+[31m      ending: false,[39m
+[31m      ended: false,[39m
+[31m      finished: false,[39m
+[31m      destroyed: false,[39m
+[31m      decodeStrings: true,[39m
+[31m      defaultEncoding: 'utf8',[39m
+[31m      length: 0,[39m
+[31m      writing: false,[39m
+[31m      corked: 0,[39m
+[31m      sync: true,[39m
+[31m      bufferProcessing: false,[39m
+[31m      onwrite: [Function: bound onwrite],[39m
+[31m      writecb: null,[39m
+[31m      writelen: 0,[39m
+[31m      afterWriteTickInfo: null,[39m
+[31m      bufferedRequest: null,[39m
+[31m      lastBufferedRequest: null,[39m
+[31m      pendingcb: 0,[39m
+[31m      prefinished: false,[39m
+[31m      errorEmitted: false,[39m
+[31m      emitClose: true,[39m
+[31m      autoDestroy: false,[39m
+[31m      bufferedRequestCount: 0,[39m
+[31m      corkedRequestsFree: [Object][39m
+[31m    },[39m
+[31m    writable: true,[39m
+[31m    _events: [Object: null prototype] {[39m
+[31m      response: [Function: handleResponse],[39m
+[31m      error: [Function: handleRequestError][39m
+[31m    },[39m
+[31m    _eventsCount: 2,[39m
+[31m    _maxListeners: undefined,[39m
+[31m    _options: {[39m
+[31m      maxRedirects: 21,[39m
+[31m      maxBodyLength: 10485760,[39m
+[31m      protocol: 'https:',[39m
+[31m      path: '/dist/android-index.json',[39m
+[31m      method: 'GET',[39m
+[31m      headers: [Object],[39m
+[31m      agent: undefined,[39m
+[31m      agents: [Object],[39m
+[31m      auth: undefined,[39m
+[31m      hostname: '127.0.0.1',[39m
+[31m      port: '8000',[39m
+[31m      nativeProtocols: [Object],[39m
+[31m      pathname: '/dist/android-index.json'[39m
+[31m    },[39m
+[31m    _ended: true,[39m
+[31m    _ending: true,[39m
+[31m    _redirectCount: 0,[39m
+[31m    _redirects: [],[39m
+[31m    _requestBodyLength: 0,[39m
+[31m    _requestBodyBuffers: [],[39m
+[31m    _onNativeResponse: [Function],[39m
+[31m    _currentRequest: ClientRequest {[39m
+[31m      _events: [Object: null prototype],[39m
+[31m      _eventsCount: 7,[39m
+[31m      _maxListeners: undefined,[39m
+[31m      outputData: [],[39m
+[31m      outputSize: 0,[39m
+[31m      writable: true,[39m
+[31m      _last: true,[39m
+[31m      chunkedEncoding: false,[39m
+[31m      shouldKeepAlive: false,[39m
+[31m      _defaultKeepAlive: true,[39m
+[31m      useChunkedEncodingByDefault: false,[39m
+[31m      sendDate: false,[39m
+[31m      _removedConnection: false,[39m
+[31m      _removedContLen: false,[39m
+[31m      _removedTE: false,[39m
+[31m      _contentLength: 0,[39m
+[31m      _hasBody: true,[39m
+[31m      _trailer: '',[39m
+[31m      finished: true,[39m
+[31m      _headerSent: true,[39m
+[31m      socket: [TLSSocket],[39m
+[31m      connection: [TLSSocket],[39m
+[31m      _header: 'GET /dist/android-index.json HTTP/1.1\r\n' +[39m
+[31m        'Accept: application/expo+json,application/json\r\n' +[39m
+[31m        'Exponent-SDK-Version: 41.0.0\r\n' +[39m
+[31m        'Exponent-Platform: android\r\n' +[39m
+[31m        'Expo-Release-Channel: default\r\n' +[39m
+[31m        'User-Agent: axios/0.21.1\r\n' +[39m
+[31m        'Host: 127.0.0.1:8000\r\n' +[39m
+[31m        'Connection: close\r\n' +[39m
+[31m        '\r\n',[39m
+[31m      _keepAliveTimeout: 0,[39m
+[31m      _onPendingData: [Function: noopPendingOutput],[39m
+[31m      agent: [Agent],[39m
+[31m      socketPath: undefined,[39m
+[31m      method: 'GET',[39m
+[31m      insecureHTTPParser: undefined,[39m
+[31m      path: '/dist/android-index.json',[39m
+[31m      _ended: false,[39m
+[31m      res: null,[39m
+[31m      aborted: false,[39m
+[31m      timeoutCb: null,[39m
+[31m      upgradeOrConnect: false,[39m
+[31m      parser: null,[39m
+[31m      maxHeadersCount: null,[39m
+[31m      reusedSocket: false,[39m
+[31m      host: '127.0.0.1',[39m
+[31m      protocol: 'https:',[39m
+[31m      _redirectable: [Circular],[39m
+[31m      [Symbol(kCapture)]: false,[39m
+[31m      [Symbol(kNeedDrain)]: false,[39m
+[31m      [Symbol(corked)]: 0,[39m
+[31m      [Symbol(kOutHeaders)]: [Object: null prototype][39m
+[31m    },[39m
+[31m    _currentUrl: 'https://127.0.0.1:8000/dist/android-index.json',[39m
+[31m    [Symbol(kCapture)]: false[39m
+[31m  },[39m
+[31m  response: undefined,[39m
+[31m  isAxiosError: true,[39m
+[31m  toJSON: [Function: toJSON][39m
+[31m}[39m
+[31m  platform: "android"[39m
+[31m  buildPhase: "reading manifest"[39m
+May 31 13:58:21 turtle[76704] ERROR: [31mFailed to build standalone app[39m
+[31m  err: Error: Failed to fetch manifest from www[39m
+[31m      at Object.getManifestAsync (/@expo/xdl@59.1.0/src/detach/ExponentTools.ts:72:11)[39m
+[31m      at processTicksAndRejections (internal/process/task_queues.js:97:5)[39m
+[31m  platform: "android"[39m

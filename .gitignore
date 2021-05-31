@@ -34,6 +34,7 @@ local.properties
 node_modules/
 npm-debug.log
 yarn-error.log
+log.txt
 
 # BUCK
 buck-out/
@@ -67,6 +68,7 @@ buck-out/
 
 # Expo
 .expo/*
+.expo-shared/*
 bin/Exponent.app
 
 npm-debug.*
@@ -81,4 +83,7 @@ web-build/
 # Configurations
 app/config/env.*.js
 !env.js
-
+jit-taxi-059a1268829d.json
+google-services.json
+@geodoc__JitMobileTaxi.bak.jks
+.eslintignore

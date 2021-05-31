@@ -1,15 +1,17 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import {
   Image,
-   ImageStyle, Platform, TextStyle, View, ViewStyle,   StyleSheet,
-   Dimensions, } from "react-native"
+  ImageStyle, Platform, TextStyle, View, ViewStyle, StyleSheet,
+  Dimensions,
+} from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { BulletItem, Button, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
-import { Api } from "../../services/api"
-import { save } from "../../utils/storage"
+import * as Location from 'expo-location';
+// import { Api } from "../../services/api"
+// import { save } from "../../utils/storage"
 export const logoIgnite = require("./logo-ignite.png")
 export const heart = require("./heart.png")
 
@@ -79,7 +81,7 @@ const LOVE: TextStyle = {
 }
 
 const MapRootStyle: ViewStyle = {
- flex: 1
+  flex: 1
 }
 
 const MapViewGoogle: ViewStyle = {
@@ -106,9 +108,34 @@ const platformCommand = Platform.select({
   android: "Cmd/Ctrl + M",
 })
 
-export const DemoScreen = observer(function DemoScreen() {
+export const DemoScreen = observer(() => {
   const navigation = useNavigation()
+  // const [location, setLocation] = useState(null);
   const goBack = () => navigation.goBack()
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [location, setLocation] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      console.log('location::', location);
+      setLocation(location);
+    })();
+  }, []);
+
+  let text = 'Waiting..';
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text = JSON.stringify(location);
+
+  }
 
   // const demoReactotron = React.useMemo(
   //   () => async () => {
@@ -153,7 +180,7 @@ export const DemoScreen = observer(function DemoScreen() {
   return (
     <View testID="DemoScreen" style={FULL}>
       <Wallpaper />
-      <Screen style={CONTAINER} preset="scroll" backgroundColor={color.transparent}>
+       <Screen style={CONTAINER}  backgroundColor={color.transparent}> 
         <Header
           headerTx="demoScreen.howTo"
           leftIcon="back"
@@ -165,6 +192,8 @@ export const DemoScreen = observer(function DemoScreen() {
           <MapView
             loadingEnabled={true}
             provider={PROVIDER_GOOGLE}
+            showsMyLocationButton={true}
+            showsUserLocation={true}
             style={styles.map}
             initialRegion={{
               latitude: LATITUDE,
@@ -219,6 +248,6 @@ const styles = StyleSheet.create({
     top: 100,
   },
   map: {
-     ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFillObject,
   },
 })

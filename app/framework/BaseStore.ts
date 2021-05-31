@@ -1,7 +1,7 @@
 /* eslint-disable no-void */
 import WSS from 'ws';
 import Debug from 'debug';
-import * as R from 'ramda';
+// import * as R from 'ramda';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import {
   ActionWithPayload,
@@ -97,11 +97,10 @@ export default class BaseStore {
     }
   }
 
-  private static checkInstance(type: WssCallType, status: number, data: any, message: Error | string) {
-    return R.ifElse(R.isNil,
-      () => ({ type: type.FAILURE, payload: message }),
-      () => ({ type: type.SUCCESS, payload: data })
-    )(status)
+  private static checkInstance(type: WssCallType, status: number, data: any, message: Error | string): any {
+    return status
+      ? () => ({ type: type.FAILURE, payload: message })
+      : () => ({ type: type.SUCCESS, payload: data })
   }
 
   constructor(public key: string, baseStoreConfig?: BaseStoreConfig) {
