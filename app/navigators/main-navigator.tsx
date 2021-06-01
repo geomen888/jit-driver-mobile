@@ -8,6 +8,10 @@ import React from "react"
 import { createStackNavigator } from "@react-navigation/stack"
 import { WelcomeScreen, DemoScreen, DemoListScreen } from "../screens"
 import { observer } from "mobx-react-lite"
+
+
+// import JitUIStore from '../stores/JitUIStore';
+
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
  * as well as what properties (if any) they might take when navigating to them.
@@ -30,19 +34,19 @@ export type PrimaryParamList = {
 const Stack = createStackNavigator<PrimaryParamList>()
 
 
-export const MainNavigator = observer(() => {
+export const MainNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen name="welcome" component={WelcomeScreen} />
-      <Stack.Screen name="demo" component={DemoScreen} />
-      <Stack.Screen name="demoList" component={DemoListScreen} />
+    <Stack.Screen name="welcome" component={WelcomeScreen} />
+    <Stack.Screen name="demo" component={DemoScreen} />
+      {/* <Stack.Screen name="demoList" component={DemoListScreen} /> */}
     </Stack.Navigator>
   )
-})
+}
 
 /**
  * A list of routes from which we're allowed to leave the app when

@@ -3,10 +3,14 @@ import { BaseStore, bind } from '../framework';
 import GankStore from './JitStore';
 import { GankType } from '../constants';
 import { GankDataCache, JitDriverCache } from '../types';
+import { IProfile } from '../models';
 
 export default class JitUIStore extends BaseStore {
   @observable
   public showMenu = false;
+
+  @observable
+  public isAuthenticated = false;
 
   @observable
   public currentType: GankType = GankType.All;
@@ -31,10 +35,22 @@ export default class JitUIStore extends BaseStore {
       driverCache = this.jitStore.driversCache.get('iam');
     }
     if (!driverCache) {
-      driverCache = { data: [], isAuthenticated: false };
+      driverCache = { data: [] };
     }
 
     return driverCache;
+  }
+
+  @computed
+  get profileCache(): { data: Partial<IProfile> }  {
+    let profileCache = { data: { token: '' } };
+    if (this.jitStore) {
+      const { rootStore: { jitStore: store }  } = this.jitStore;
+
+      profileCache = { data: store.getProfile };
+    }
+
+    return profileCache;
   }
 
   @computed
@@ -42,6 +58,10 @@ export default class JitUIStore extends BaseStore {
     return this.driverCache.data;
   }
 
+  @computed
+  get profileLoading(): boolean {
+    return this.jitStore ? this.jitStore.profileCacheLoading : false;
+  }
 
   @computed
   get loading() {
@@ -49,12 +69,17 @@ export default class JitUIStore extends BaseStore {
   }
 
   @action('切换干货类型')
-  public switchGankType (type: GankType) {
+  public switchGankType(type: GankType) {
     if (this.showMenu) {
       this.showMenu = false;
     }
 
     this.currentType = type;
+  }
+
+  @action('auth')
+  public switchAuth(type: boolean) {
+    this.isAuthenticated = type;
   }
 
   @bind

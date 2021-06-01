@@ -21,6 +21,9 @@ import {
   wssCallWith
 } from '../framework';
 import { ApiCallType, ActionWithPayload, WssCallType } from '../framework/types';
+import { RootStore } from "../models"
+import { LoadingSatatus } from '../common/enums/profile-loading-status.type'
+
 // import { connectWss } from '../services/wss';
 import { DEBUG } from '@env';
 
@@ -44,7 +47,10 @@ export default class JitStore extends BaseStore {
   @observable
   public driverCacheLoading = false;
 
-  constructor(public key: string) {
+  @observable
+  public profileCacheLoading = false;
+
+  constructor(public key: string, public rootStore: RootStore) {
     super(key);
     this.runSaga(this.sagaMain);
   }
@@ -146,30 +152,33 @@ export default class JitStore extends BaseStore {
 
     yield call<any>(runInAction, () => {
       debug('handleDriverLoginRequest:driversCache::', JSON.stringify(self.driversCache));
-
+      self.rootStore.jitStore.resetProfile();
+      self.rootStore.jitStore.setProfileLoadingStatus(LoadingSatatus.IDLE)
       if (!self.driversCache.has(type)) {
         self.driversCache.set(type, { data: [], isAuthenticated: false  });
       }
-      self.driverCacheLoading = true;
+      self.profileCacheLoading = true;
     });
 
     debug('handleDriverLoginRequest:type::', type);
     const cache = (self.driversCache.get(type) as unknown) as { data: IToken[], isAuthenticated: boolean };
 
     yield put({ type: JitStore.GET_DRIVER_LOGIN_TYPE.REQUEST, payload: { phone } });
-
+    self.rootStore.jitStore.setProfileLoadingStatus(LoadingSatatus.LOADING)
     const sagaAction = yield take(JitStore.GET_DRIVER_LOGIN_TYPE.SUCCESS);
     debug('handleDriverLoginRequest:sagaAction::', sagaAction);
 
-    const res = sagaAction.payload as JitWssResponse<IToken[]>;
+    const res = sagaAction.payload as JitWssResponse<IToken>;
     debug('handleDriverLoginRequest:sagaAction::', sagaAction);
 
     yield call<any>(runInAction, () => {
       debug('handleDriverLoginRequest:res::', res);
+      self.rootStore.jitStore.setProfileLoadingStatus(LoadingSatatus.READY)
+      self.rootStore.jitStore.saveProfile({ ...res?.data, phone })
       cache.data = cache.data.concat(res.data);
       cache.isAuthenticated = true;
       self.driversCache.set('iam', { data: cache.data, isAuthenticated: true })
-      self.driverCacheLoading = false;
+      self.profileCacheLoading = false;
     });
   }
 

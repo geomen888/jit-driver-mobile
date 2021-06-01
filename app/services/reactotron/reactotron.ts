@@ -148,6 +148,7 @@ export class Reactotron {
         command: "resetStore",
         handler: () => {
           console.tron.log("resetting store")
+          console.log("resetting store")
           clear()
         },
       })

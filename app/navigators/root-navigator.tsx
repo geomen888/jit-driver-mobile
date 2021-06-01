@@ -8,6 +8,7 @@ import React from "react"
 import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 import { MainNavigator } from "./main-navigator"
+
 import { observer } from "mobx-react-lite"
 
 /**
@@ -26,7 +27,7 @@ export type RootParamList = {
 
 const Stack = createStackNavigator<RootParamList>()
 
-const RootStack = observer(() => {
+const RootStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -42,7 +43,7 @@ const RootStack = observer(() => {
       />
     </Stack.Navigator>
   )
-})
+}
 
 export const RootNavigator = React.forwardRef<
   NavigationContainerRef,

@@ -1,4 +1,4 @@
-import React, { useState, FunctionComponent, PropsWithChildren, useEffect,  useLayoutEffect } from "react";
+import React, { useState, FunctionComponent, useEffect } from "react";
 import Debug from 'debug';
 import { DEBUG } from '@env';
 import {
@@ -10,21 +10,18 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   Keyboard,
-
-  TextInput
+  TextInput,
+  ActivityIndicator
 } from "react-native"
+import { withStore } from '../../models';
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
-import { inject } from 'mobx-react';
 import { Button, Header, Screen, Text, Wallpaper } from "../../components"
 import { color, spacing, typography } from "../../theme"
-// import { Util } from '../../utils';
 import JitUIStore from '../../stores/JitUIStore';
 
-
-// import { LoadingSatatus } from '../../common/enums/profile-loading-status.type';
-
-const bowserLogo = require("./bowser.png")
+// tslint:disable-next-line: no-var-requires
+const bowserLogo = require("./bowser.png");
 
 const debug = Debug('welcomeScreen:');
 const error = Debug('welcomeScreen:error:');
@@ -36,6 +33,15 @@ const FULL: ViewStyle = { flex: 1 }
 const CONTAINER: ViewStyle = {
   backgroundColor: color.transparent,
   paddingHorizontal: spacing[4],
+}
+const LOAD_INDICATOR_CONTAINER: ViewStyle = {
+    flex: 1,
+    justifyContent: "center"
+}
+const LOAD_INDICATOR_HORIZONTAL: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-around",
+  padding: 10
 }
 const TEXT: TextStyle = {
   color: color.palette.white,
@@ -77,13 +83,13 @@ const BOWSER: ImageStyle = {
   marginVertical: spacing[5],
   maxWidth: "100%",
 }
-const CONTENT: TextStyle = {
-  ...TEXT,
-  color: "#BAB6C8",
-  fontSize: 15,
-  lineHeight: 22,
-  marginBottom: spacing[5],
-}
+// const CONTENT: TextStyle = {
+//   ...TEXT,
+//   color: "#BAB6C8",
+//   fontSize: 15,
+//   lineHeight: 22,
+//   marginBottom: spacing[5],
+// }
 const CONTINUE: ViewStyle = {
   paddingVertical: spacing[4],
   paddingHorizontal: spacing[4],
@@ -110,94 +116,94 @@ const FOOTER_CONTENT: ViewStyle = {
   paddingHorizontal: spacing[4],
 }
 
-// const propTypes = {
-//   children:  PropTypes.shape({ jit: PropTypes.object }),
-// };
-
-// type ScreensProps = PropTypes.InferProps<typeof propTypes>;
-
 interface IScreenProps {
   jit?: JitUIStore;
 }
 
-export const WelcomeScreen: FunctionComponent<PropsWithChildren<IScreenProps>> = inject('jit')(observer(({ jit }) => {
+export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
+  observer(withStore((props: { store: IScreenProps }) => {
+    const { store: { jit } } = props;
+    // debug('payload::', jit);
+    // debug('props::', props);
     const navigation = useNavigation()
     const nextScreen = () => navigation.navigate("demo")
     const [text, setText] = useState('')
     // const { profileCache = {}, ProfileLoading = LoadingSatatus.IDLE } = jit
     const login = () => {
       try {
-       debug('phone::', text);
-      // const driverCache = Util.dtoToJson(jit.driverCache);
-       jit.driverLogin(text);
-       // jit.loadNextPage()
-       debug('login::', jit.driverCache);
-       setText('');
+        // debug('jit::', jit);
+        debug('phone:::', text);
+        jit.driverLogin(text);
+        debug('login::', jit.profileCache);
+        setText('');
+        jit.switchAuth(true);
       } catch (e) {
+        jit.switchAuth(false);
         error(e);
       }
     }
 
     useEffect(() => {
-      // if (!jit || !jit.driverCache) {
-      //   return
-      // }
-      debug('useLayoutEffect:driverCache::', jit.driverCache);
-      debug('useLayoutEffect:ProfileLoading::', jit.loading)
+      if (!jit) {
+
+        return;
+      }
+      debug('useLayoutEffect:isAuthenticated::', jit.isAuthenticated);
+      debug('useLayoutEffect:profileCache::', jit.profileCache);
+      debug('useLayoutEffect:ProfileLoading::', jit.profileLoading)
       // const cache = Util.dtoToJson(jit.driverCache)
-      if (jit.driverCache.isAuthenticated) {
+      if (jit.isAuthenticated) {
         nextScreen();
       }
-    }, [(jit && jit.driverCache), (jit && jit.loading)])
+    }, [jit?.isAuthenticated, jit?.profileLoading])
 
-    return (
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View testID="WelcomeScreen" style={FULL}>
-          <Wallpaper />
-          <Screen style={CONTAINER} preset="scroll" backgroundColor={color.transparent}>
-            <Header headerTx="welcomeScreen.poweredBy" style={HEADER} titleStyle={HEADER_TITLE} />
-            <Text style={TITLE_WRAPPER}>
-              <Text style={TITLE} text="Your new app, " />
-              <Text style={ALMOST} text="almost" />
-              <Text style={TITLE} text="!" />
-            </Text>
-            <Text style={TITLE} preset="header" tx="welcomeScreen.readyForLaunch" />
-            <Image source={bowserLogo} style={BOWSER} />
+    return jit?.profileLoading
+      ? (<View style={[LOAD_INDICATOR_CONTAINER, LOAD_INDICATOR_HORIZONTAL]}>
+        <ActivityIndicator size="large" color={color.blue} />
+      </View>)
+      : (
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View testID="WelcomeScreen" style={FULL}>
+            <Wallpaper />
+            <Screen style={CONTAINER} preset="scroll" backgroundColor={color.transparent}>
+              <Header headerTx="welcomeScreen.poweredBy" style={HEADER} titleStyle={HEADER_TITLE} />
+              <Text style={TITLE_WRAPPER}>
+                <Text style={TITLE} text="Your new app, " />
+                <Text style={ALMOST} text="almost" />
+                <Text style={TITLE} text="!" />
+              </Text>
+              <Text style={TITLE} preset="header" tx="welcomeScreen.readyForLaunch" />
+              <Image source={bowserLogo} style={BOWSER} />
 
-            <TextInput
-              style={LOGIN}
-              placeholder='Введите тел +38_'
-              value={text}
-              onChangeText={setText}
-            />
-            
-            {/* <Text style={CONTENT}>
+              <TextInput
+                style={LOGIN}
+                placeholder='Введите тел +38_'
+                value={text}
+                onChangeText={setText}
+              />
+
+              {/* <Text style={CONTENT}>
           This probably isn't what your app is going to look like. Unless your designer handed you
           this screen and, in that case, congrats! You're ready to ship.
         </Text> */}
-            {/* <Text style={CONTENT}>
+              {/* <Text style={CONTENT}>
           For everyone else, this is where you'll see a live preview of your fully functioning app
           using Ignite.
         </Text> */}
-          </Screen>
-          <SafeAreaView style={FOOTER}>
-            <View style={FOOTER_CONTENT}>
-              <Button
-                testID="next-screen-button"
-                style={CONTINUE}
-                textStyle={CONTINUE_TEXT}
-                tx="welcomeScreen.continue"
-                onPress={login}
-              />
-            </View>
-          </SafeAreaView>
-        </View>
-      </TouchableWithoutFeedback>
-    )
+            </Screen>
+            <SafeAreaView style={FOOTER}>
+              <View style={FOOTER_CONTENT}>
+                <Button
+                  testID="next-screen-button"
+                  style={CONTINUE}
+                  textStyle={CONTINUE_TEXT}
+                  tx="welcomeScreen.continue"
+                  onPress={login}
+                />
+              </View>
+            </SafeAreaView>
+          </View>
+        </TouchableWithoutFeedback>
+      )
   }));
-
-
-// WelcomeScreen.wrappedomponent.propTypes = {
-//   jit: PropTypes.object
-// }
 

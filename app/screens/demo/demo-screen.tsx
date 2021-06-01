@@ -180,7 +180,7 @@ export const DemoScreen = observer(() => {
   return (
     <View testID="DemoScreen" style={FULL}>
       <Wallpaper />
-       <Screen style={CONTAINER}  backgroundColor={color.transparent}> 
+       <Screen style={CONTAINER}  backgroundColor={color.transparent}>
         <Header
           headerTx="demoScreen.howTo"
           leftIcon="back"

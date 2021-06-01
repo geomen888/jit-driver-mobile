@@ -1,12 +1,13 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
-import { DriverStoreModel } from "../driver-store/driver-store"
+import { JitStoreModel } from "../jit-store/jit-store"
+
 
 /**
  * A RootStore model.
  */
 // prettier-ignore
 export const RootStoreModel = types.model("RootStore").props({
-  jitStore: types.optional(DriverStoreModel, {} as any),
+  jitStore: types.optional(JitStoreModel, {} as any),
 })
 
 /**

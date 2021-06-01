@@ -7,8 +7,8 @@ import { LoadingSatatus } from '../../common/enums/profile-loading-status.type'
 /**
  * Example store containing Rick and Morty characters
  */
-export const DriverStoreModel = types
-  .model("DriverStore")
+export const JitStoreModel = types
+  .model("JitStore")
   .props({
     drivers: types.optional(types.array(DriverModel), []),
     profile: types.optional(ProfileModel, {}),
@@ -25,12 +25,24 @@ export const DriverStoreModel = types
     }
   }))
   .actions((self) => ({
-    saveProfile: (profile: ProfileSnapshot) => {
-      self.profile.id = profile.id || null;
-      self.profile.token = profile.token || null;
-      self.profile.name = profile.name || null;
-      self.profile.status = profile.status || null;
-      self.profile.phone = profile.phone || null;
+    saveProfile: (profile: Partial<ProfileSnapshot>) => {
+      self.profile.id = profile.id || self.profile.id || '';
+      self.profile.token = profile.token || '';
+      self.profile.isAuthenticated = Boolean(profile.token)
+      self.profile.name = profile.name ||  self.profile.name || '';
+      self.profile.status = profile.status || self.profile.status || '';
+      self.profile.phone = profile.phone || self.profile.phone || '';
+    },
+    resetProfile: () => {
+      // self.profile.id = '';
+      self.profile.token = '';
+      // self.profile.name = '';
+      // self.profile.status = '';
+      // self.profile.phone = '';
+      self.profile.isAuthenticated = false;
+      self.stateProfile = LoadingSatatus.IDLE;
+      // console.log('resetProfile::', self.profile);
+
     },
     setProfileLoadingStatus: (status: LoadingSatatus) => {
       self.stateProfile = status;
@@ -43,6 +55,15 @@ export const DriverStoreModel = types
       get profileLoading() {
 
         return self.stateProfile || LoadingSatatus.IDLE
+      },
+      get isAuthenticated() {
+        return self.profile.isAuthenticate
+      },
+      get getProfile() {
+        return ({
+          ...self.profile,
+          isAuthenticated: self.profile.isAuthenticate
+        })
       }
   }))
   .actions((self) => ({
@@ -58,8 +79,8 @@ export const DriverStoreModel = types
     },
   }))
 
-type DriverStoreType = Instance<typeof DriverStoreModel>
-export interface DriverStore extends DriverStoreType {}
-type DriverStoreSnapshotType = SnapshotOut<typeof DriverStoreModel>
-export interface DriverStoreSnapshot extends DriverStoreSnapshotType {}
-export const createDriverStoreDefaultModel = () => types.optional(DriverStoreModel, {})
+type JitStoreType = Instance<typeof JitStoreModel>
+export interface JitStore extends JitStoreType {}
+type JitStoreSnapshotType = SnapshotOut<typeof JitStoreModel>
+export interface JitStoreSnapshot extends JitStoreSnapshotType {}
+export const createDriverStoreDefaultModel = () => types.optional(JitStoreModel, {})

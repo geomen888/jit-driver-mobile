@@ -10,7 +10,7 @@ export const ProfileModel = types.model("Profile")
     isAuthenticated: types.maybe(types.boolean),
   })
   .views((self) => ({
-      get isAuthenticated() {
+      get isAuthenticate() {
           return self.isAuthenticated || false
       }
   }));

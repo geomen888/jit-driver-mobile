@@ -12,7 +12,7 @@
 import "./i18n"
 import "./utils/ignore-warnings"
 import React, { useState, useEffect, useRef } from "react"
-import { Provider } from 'mobx-react';
+// import { Provider } from 'mobx-react';
 import { BaseStore } from './framework';
 import { NavigationContainerRef } from "@react-navigation/native"
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context"
@@ -32,6 +32,8 @@ import {
   useNavigationPersistence,
 } from "./navigators"
 // import { RootStore, RootStoreProvider, setupRootStore } from "./models"
+
+import { Provider, setupRootStore } from "./models"
 // import { ToggleStorybook } from "../storybook/toggle-storybook"
 
 // This puts screens in a native ViewController or Activity. If you want fully native
@@ -50,12 +52,12 @@ BaseStore.init({
 /**
  * This is the root component of our app.
  */
-const  jitStore = new JitStore('_jit');
-const  jitUIStore = new JitUIStore('jit', jitStore);
+// const  jitStore = new JitStore('_jit');
+// const  jitUIStore = new JitUIStore('jit', jitStore);
 
 function App() {
   const navigationRef = useRef<NavigationContainerRef>()
-  // const [rootStore, setRootStore] = useState<JitUIStore | undefined>(undefined)
+  const [rootStore, setRootStore] = useState<JitUIStore | undefined>(undefined)
 
   setRootNavigation(navigationRef)
   useBackButtonHandler(navigationRef, canExit)
@@ -68,13 +70,7 @@ function App() {
   useEffect(() => {
     (async () => {
       await initFonts() // expo
-      // setupRootStore().then(store => {
-      //   if (!rootStore) {
-      //     const  jitStore = new JitStore('_jit');
-      //     const  jitUIStore = new JitUIStore('jit', jitStore);
-      //     setRootStore(jitUIStore)
-      //   }
-      //   })
+      setupRootStore().then(setRootStore)
     })()
     // setRootStore(jitUIStore)
   }, [])
@@ -89,7 +85,9 @@ function App() {
   return (
     // <ToggleStorybook>
     //   <RootStoreProvider value={rootStore}>
-     <Provider jit={jitUIStore}>
+        //  <Provider jit={jitUIStore}>
+
+    <Provider value={rootStore}>
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <RootNavigator
             ref={navigationRef}
@@ -97,8 +95,9 @@ function App() {
             onStateChange={onNavigationStateChange}
           />
         </SafeAreaProvider>
-        </Provider>
-    //  </RootStoreProvider>
+     </Provider>
+      //      </Provider>
+
     // </ToggleStorybook>
   )
 }
