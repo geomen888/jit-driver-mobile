@@ -14,11 +14,13 @@ import "./utils/ignore-warnings"
 import React, { useState, useEffect, useRef } from "react"
 // import { Provider } from 'mobx-react';
 import { BaseStore } from './framework';
+import * as eva from '@eva-design/eva';
 import { NavigationContainerRef } from "@react-navigation/native"
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context"
+import { ApplicationProvider, IconRegistry, Layout, Text } from '@ui-kitten/components';
+import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { initFonts } from "./theme/fonts" // expo
 import JitUIStore from './stores/JitUIStore';
-import JitStore from './stores/JitStore';
 
 import { PROTOCOL as protocol } from "@env";
 
@@ -86,8 +88,9 @@ function App() {
     // <ToggleStorybook>
     //   <RootStoreProvider value={rootStore}>
         //  <Provider jit={jitUIStore}>
-
-    <Provider value={rootStore}>
+<>
+<IconRegistry icons={EvaIconsPack} />
+    <Provider value={rootStore} {...eva} theme={eva.light}>
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <RootNavigator
             ref={navigationRef}
@@ -96,6 +99,7 @@ function App() {
           />
         </SafeAreaProvider>
      </Provider>
+     </>
       //      </Provider>
 
     // </ToggleStorybook>

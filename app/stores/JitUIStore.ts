@@ -1,6 +1,6 @@
 import { computed, observable, action } from 'mobx';
 import { BaseStore, bind } from '../framework';
-import GankStore from './JitStore';
+import JitStore from './JitStore';
 import { GankType } from '../constants';
 import { GankDataCache, JitDriverCache } from '../types';
 import { IProfile } from '../models';
@@ -10,7 +10,9 @@ export default class JitUIStore extends BaseStore {
   public showMenu = false;
 
   @observable
-  public isAuthenticated = false;
+  public isAuthenticated = this.jitStore
+   ? this.jitStore?.rootStore?.jitStore?.isAuthenticated
+   : false;
 
   @observable
   public currentType: GankType = GankType.All;
@@ -97,7 +99,7 @@ export default class JitUIStore extends BaseStore {
     this.showMenu = show;
   }
 
-  constructor (public key: string, protected jitStore: GankStore) {
+  constructor (public key: string, protected jitStore: JitStore) {
     super(key);
   }
 }

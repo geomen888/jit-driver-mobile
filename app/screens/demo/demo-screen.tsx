@@ -1,15 +1,24 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef, useCallback } from "react"
 import {
   Image,
-  ImageStyle, Platform, TextStyle, View, ViewStyle, StyleSheet,
+  ImageStyle,
+  TouchableOpacity,
+  Platform,
+  TextStyle,
+  View,
+  ViewStyle,
+  StyleSheet,
   Dimensions,
 } from "react-native"
+// import { Icon } from 'react-native-elements'
+import { Button, Divider, Layout, TopNavigation, Icon } from '@ui-kitten/components';
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { BulletItem, Button, Header, Text, Screen, Wallpaper } from "../../components"
+import { BulletItem, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
 import * as Location from 'expo-location';
+import { IMapRegion } from './intreface';
 // import { Api } from "../../services/api"
 // import { save } from "../../utils/storage"
 export const logoIgnite = require("./logo-ignite.png")
@@ -22,24 +31,16 @@ const ASPECT_RATIO = width / height;
 const LATITUDE = 37.78825;
 const LONGITUDE = -122.4324;
 const LATITUDE_DELTA = 0.0922;
-const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+// const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 const FULL: ViewStyle = { flex: 1 }
 const CONTAINER: ViewStyle = {
   backgroundColor: color.transparent,
   paddingHorizontal: spacing[4],
 }
-const DEMO: ViewStyle = {
-  paddingVertical: spacing[4],
-  paddingHorizontal: spacing[4],
-  backgroundColor: "#5D2555",
-}
+
 const BOLD: TextStyle = { fontWeight: "bold" }
-const DEMO_TEXT: TextStyle = {
-  ...BOLD,
-  fontSize: 13,
-  letterSpacing: 2,
-}
+
 const HEADER: TextStyle = {
   paddingTop: spacing[3],
   paddingBottom: spacing[5] - 1,
@@ -51,6 +52,22 @@ const HEADER_TITLE: TextStyle = {
   lineHeight: 15,
   textAlign: "center",
   letterSpacing: 1.5,
+}
+/*
+const platformCommand = Platform.select({
+  ios: "Cmd + D",
+  android: "Cmd/Ctrl + M",
+})
+
+const DEMO: ViewStyle = {
+  paddingVertical: spacing[4],
+  paddingHorizontal: spacing[4],
+  backgroundColor: "#5D2555",
+}
+const DEMO_TEXT: TextStyle = {
+  ...BOLD,
+  fontSize: 13,
+  letterSpacing: 2,
 }
 const TITLE: TextStyle = {
   ...BOLD,
@@ -101,19 +118,43 @@ const HINT: TextStyle = {
   fontSize: 12,
   lineHeight: 15,
   marginVertical: spacing[2],
+} */
+
+const SIDE_BOX: ViewStyle = {
+    alignSelf: 'flex-end',
+    padding: 10,
+    width: 50,
+    height: "100%",
 }
 
-const platformCommand = Platform.select({
-  ios: "Cmd + D",
-  android: "Cmd/Ctrl + M",
-})
+const SIDE_BOX_ITEMS: ViewStyle = {
+  top: 50,
+  right: 7,
+  paddingBottom: 10,
+  paddingTop: 10,
+}
+
 
 export const DemoScreen = observer(() => {
   const navigation = useNavigation()
+  const mapView = useRef(null);
   // const [location, setLocation] = useState(null);
   const goBack = () => navigation.goBack()
   const [errorMsg, setErrorMsg] = useState(null);
   const [location, setLocation] = useState(null);
+  const [region, setRegion] = useState<IMapRegion>({
+    latitude: LATITUDE,
+    longitude: LONGITUDE,
+    latitudeDelta: LATITUDE_DELTA,
+    longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
+  });
+
+
+  const setLocationRegion = useCallback((loc, reg) => {
+        setLocation(loc);
+        setRegion(reg);
+  }, [])
+
 
   useEffect(() => {
     (async () => {
@@ -123,11 +164,45 @@ export const DemoScreen = observer(() => {
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
-      console.log('location::', location);
-      setLocation(location);
-    })();
-  }, []);
+      const { coords: loc } = await Location.getCurrentPositionAsync({});
+      const tempRegion = {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
+      }
+      console.log('location::', loc);
+      mapView.current.animateToRegion(tempRegion, 1000);
+      setLocationRegion(loc, tempRegion)
+    })()
+  }, [])
+
+
+  const onPressZoomOut = () => {
+    const tempRegion = {
+      latitude: region.latitude,
+      longitude: region.longitude,
+      latitudeDelta: region.latitudeDelta / 2,
+      longitudeDelta: region.longitudeDelta / 2,
+    };
+
+    setRegion(tempRegion)
+    //makes the map appear to "move" to the user
+    mapView.current.animateToRegion(tempRegion, 1000);
+
+  }
+
+  const onPressZoomIn = () => {
+    const tempRegion = {
+      latitude: region.latitude,
+      longitude: region.longitude,
+      latitudeDelta: region.latitudeDelta * 2,
+      longitudeDelta: region.longitudeDelta * 2,
+    };
+    setRegion(tempRegion)
+      //makes the map appear to "move" to the user
+    mapView.current.animateToRegion(tempRegion, 1000);
+  }
 
   let text = 'Waiting..';
   if (errorMsg) {
@@ -190,26 +265,48 @@ export const DemoScreen = observer(() => {
         />
         <View style={styles.container}>
           <MapView
+            ref={mapView}
+            zoomEnabled={true}
             loadingEnabled={true}
             provider={PROVIDER_GOOGLE}
             showsMyLocationButton={true}
             showsUserLocation={true}
             style={styles.map}
-            initialRegion={{
-              latitude: LATITUDE,
-              longitude: LONGITUDE,
-              latitudeDelta: LATITUDE_DELTA,
-              longitudeDelta: LONGITUDE_DELTA,
-            }}
+            initialRegion={region}
           />
+                <View style={SIDE_BOX}>
+                  <TouchableOpacity
+                      onPress={() => {onPressZoomIn()}}
+                      >
+                      <View style={SIDE_BOX_ITEMS}>
+                        <Icon name='minus-circle-outline' width={32} height={32} fill='#31a04f'/>
+                      </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                      onPress={() => {onPressZoomOut()}}
+                      >
+                      <View style={SIDE_BOX_ITEMS}>
+                        <Icon name='plus-circle-outline' width={32} height={32} fill='#31a04f'/>
+                      </View>
+                  </TouchableOpacity>
+                  {/* <TouchableOpacity id="recenterButton"
+                      onPress={() => {this.onPressRecenter()}}
+                      >
+                      <View style={styles.sideBoxItems}>
+                        <Icon name='stop-circle-outline' width={32} height={32} fill='#3366FF'/>
+                      </View>
+                  </TouchableOpacity> */}
+                </View>
         </View>
         {/* <Text style={TITLE} preset="header" tx="demoScreen.title" />
         <Text style={TAGLINE} tx="demoScreen.tagLine" />
         <BulletItem text="Integrated here, Navigation with State, TypeScript, Storybook, Solidarity, and i18n." />
         <BulletItem
-          text={`To run Storybook, press ${platformCommand} or shake the device to show the developer menu, then select "Toggle Storybook"`}
+          text={`To run Storybook, press ${platformCommand}
+          or shake the device to show the developer menu, then select "Toggle Storybook"`}
         />
-        <BulletItem text="Load up Reactotron!  You can inspect your app, view the events, interact, and so much more!" /> */}
+        <BulletItem text="Load up Reactotron!
+         You can inspect your app, view the events, interact, and so much more!" /> */}
         {/* <View>
           <Button
             style={DEMO}
@@ -245,7 +342,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    top: 100,
+    top: 45,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
