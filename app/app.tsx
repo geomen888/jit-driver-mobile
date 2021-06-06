@@ -17,13 +17,12 @@ import { BaseStore } from './framework';
 import * as eva from '@eva-design/eva';
 import { NavigationContainerRef } from "@react-navigation/native"
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context"
-import { ApplicationProvider, IconRegistry, Layout, Text } from '@ui-kitten/components';
+import { IconRegistry } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { initFonts } from "./theme/fonts" // expo
 import JitUIStore from './stores/JitUIStore';
 
 import { PROTOCOL as protocol } from "@env";
-
 
 import * as storage from "./utils/storage"
 import {
@@ -48,14 +47,15 @@ export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
 BaseStore.init({
   axiosConfig: {
-   baseURL: protocol + '//ucdbj810se.execute-api.eu-central-1.amazonaws.com/dev'
+    baseURL: protocol + '//ucdbj810se.execute-api.eu-central-1.amazonaws.com/dev'
+  },
+  webSocketConfig: {
+    wssUrl: 'wss://6kcv5f7ko9.execute-api.eu-central-1.amazonaws.com/dev'
   }
 });
 /**
  * This is the root component of our app.
  */
-// const  jitStore = new JitStore('_jit');
-// const  jitUIStore = new JitUIStore('jit', jitStore);
 
 function App() {
   const navigationRef = useRef<NavigationContainerRef>()
@@ -86,8 +86,6 @@ function App() {
   // otherwise, we're ready to render the app
   return (
     // <ToggleStorybook>
-    //   <RootStoreProvider value={rootStore}>
-        //  <Provider jit={jitUIStore}>
 <>
 <IconRegistry icons={EvaIconsPack} />
     <Provider value={rootStore} {...eva} theme={eva.light}>
@@ -100,8 +98,6 @@ function App() {
         </SafeAreaProvider>
      </Provider>
      </>
-      //      </Provider>
-
     // </ToggleStorybook>
   )
 }

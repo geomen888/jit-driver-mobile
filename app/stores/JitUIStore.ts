@@ -89,6 +89,13 @@ export default class JitUIStore extends BaseStore {
     return this.jitStore.loadNextPageOfType(this.currentType);
   }
 
+
+  @bind
+  public coordinatesDriver(coordinates: number[]) {
+    const { data: { token } } =  this.profileCache;
+    return this.jitStore.loadCoordinatesDriverType(token, { coordinates });
+  }
+
   @bind
   public driverLogin(phone: string) {
     return this.jitStore.loadDriverLoginType(phone);

@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react"
+import Debug from 'debug';
+import { DEBUG } from '@env';
 import {
   Image,
   ImageStyle,
@@ -18,11 +20,20 @@ import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { BulletItem, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
 import * as Location from 'expo-location';
+import { withStore } from '../../models';
 import { IMapRegion } from './intreface';
+import JitUIStore from '../../stores/JitUIStore';
+
 // import { Api } from "../../services/api"
 // import { save } from "../../utils/storage"
 export const logoIgnite = require("./logo-ignite.png")
 export const heart = require("./heart.png")
+
+const debug = Debug('demoScreen:');
+const error = Debug('demoScreen:error:');
+
+debug.enabled = DEBUG || false;
+error.enabled = DEBUG || false;
 
 
 const { width, height } = Dimensions.get('window');
@@ -52,6 +63,17 @@ const HEADER_TITLE: TextStyle = {
   lineHeight: 15,
   textAlign: "center",
   letterSpacing: 1.5,
+}
+
+const MAP_WRAPPER: ViewStyle = {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    top: 45,
+}
+const MAP: ViewStyle = {
+  ...StyleSheet.absoluteFillObject,
+
 }
 /*
 const platformCommand = Platform.select({
@@ -133,9 +155,12 @@ const SIDE_BOX_ITEMS: ViewStyle = {
   paddingBottom: 10,
   paddingTop: 10,
 }
+interface IScreenProps {
+  jit?: JitUIStore;
+}
 
-
-export const DemoScreen = observer(() => {
+export const DemoScreen = observer(withStore((props: { store: IScreenProps }) => {
+  const { store: { jit } } = props;
   const navigation = useNavigation()
   const mapView = useRef(null);
   // const [location, setLocation] = useState(null);
@@ -171,8 +196,9 @@ export const DemoScreen = observer(() => {
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
       }
-      console.log('location::', loc);
+      debug('location::', loc);
       mapView.current.animateToRegion(tempRegion, 1000);
+      jit.coordinatesDriver([loc.latitude, loc.longitude]);
       setLocationRegion(loc, tempRegion)
     })()
   }, [])
@@ -189,7 +215,6 @@ export const DemoScreen = observer(() => {
     setRegion(tempRegion)
     //makes the map appear to "move" to the user
     mapView.current.animateToRegion(tempRegion, 1000);
-
   }
 
   const onPressZoomIn = () => {
@@ -263,7 +288,7 @@ export const DemoScreen = observer(() => {
           style={HEADER}
           titleStyle={HEADER_TITLE}
         />
-        <View style={styles.container}>
+        <View style={MAP_WRAPPER}>
           <MapView
             ref={mapView}
             zoomEnabled={true}
@@ -271,7 +296,7 @@ export const DemoScreen = observer(() => {
             provider={PROVIDER_GOOGLE}
             showsMyLocationButton={true}
             showsUserLocation={true}
-            style={styles.map}
+            style={MAP}
             initialRegion={region}
           />
                 <View style={SIDE_BOX}>
@@ -289,13 +314,6 @@ export const DemoScreen = observer(() => {
                         <Icon name='plus-circle-outline' width={32} height={32} fill='#31a04f'/>
                       </View>
                   </TouchableOpacity>
-                  {/* <TouchableOpacity id="recenterButton"
-                      onPress={() => {this.onPressRecenter()}}
-                      >
-                      <View style={styles.sideBoxItems}>
-                        <Icon name='stop-circle-outline' width={32} height={32} fill='#3366FF'/>
-                      </View>
-                  </TouchableOpacity> */}
                 </View>
         </View>
         {/* <Text style={TITLE} preset="header" tx="demoScreen.title" />
@@ -331,20 +349,5 @@ export const DemoScreen = observer(() => {
       </Screen>
     </View>
   )
-})
+}));
 
-// DemoScreen.prototype = {
-//   provider: MapView.ProviderPropType,
-// }
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    top: 45,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-})

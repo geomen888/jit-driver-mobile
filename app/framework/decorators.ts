@@ -1,7 +1,15 @@
+import Debug from 'debug';
 import { ApiCallWithConfig, WssCallWithConfig } from './types';
 import { getApiCallType, getWssCallType } from './utils';
+import { DEBUG } from '@env';
 
-export function apiCallWith (apiCallTypeName: string, config: ApiCallWithConfig = {}): MethodDecorator {
+
+const debug = Debug('decorators::');
+const error = Debug('decorators:error:');
+debug.enabled = DEBUG || true;
+error.enabled = DEBUG || true;
+
+export function apiCallWith(apiCallTypeName: string, config: ApiCallWithConfig = {}): MethodDecorator {
   return function (target: any, key: string, descriptor: any) {
     config.apiCallTypeName = apiCallTypeName;
     descriptor.value.$apiCallWith = config;
@@ -10,7 +18,7 @@ export function apiCallWith (apiCallTypeName: string, config: ApiCallWithConfig 
   };
 }
 
-export function wssCallWith (wssCallTypeName: string, config: WssCallWithConfig = {}): MethodDecorator {
+export function wssCallWith(wssCallTypeName: string, config: WssCallWithConfig = {}): MethodDecorator {
   return function (target: any, key: string, descriptor: any) {
     config.wssCallTypeName = wssCallTypeName;
     descriptor.value.$wssCallWith = config;
@@ -66,17 +74,23 @@ export function apiTypeDef (target: any, key: string): any {
   }
 }
 
-export function wssTypeDef (target: any, key: string): any {
+export function wssTypeDef(target: any, key: string): any {
   if (typeof target === 'function') {
-    // static api type
+    // static wss type
     const namespace = target.name;
+    debug('wssTypeDef:namespace::', namespace);
+    debug('wssTypeDef:key::', key);
+
     target[key] = getWssCallType(key, namespace);
+
     return target;
   } else {
-    // instance api type
+    // instance wss type
     return {
       get () {
         const cacheKey = '__' + key;
+        debug('wssTypeDef:cacheKey::', cacheKey);
+
         if (!this[cacheKey]) {
           const namespace = this.constructor.name;
           this[cacheKey] = getWssCallType(key, namespace, this.key);
