@@ -37,10 +37,10 @@ error.enabled = DEBUG || false;
 
 
 const { width, height } = Dimensions.get('window');
-
+// 49.986119, 36.259726
 const ASPECT_RATIO = width / height;
-const LATITUDE = 37.78825;
-const LONGITUDE = -122.4324;
+const LATITUDE = 49.986119;
+const LONGITUDE = 36.259726;
 const LATITUDE_DELTA = 0.0922;
 // const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
@@ -208,8 +208,8 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
     const tempRegion = {
       latitude: region.latitude,
       longitude: region.longitude,
-      latitudeDelta: region.latitudeDelta / 2,
-      longitudeDelta: region.longitudeDelta / 2,
+      latitudeDelta: region.latitudeDelta / 0.2,
+      longitudeDelta: region.longitudeDelta / 0.2,
     };
 
     setRegion(tempRegion)
@@ -221,8 +221,8 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
     const tempRegion = {
       latitude: region.latitude,
       longitude: region.longitude,
-      latitudeDelta: region.latitudeDelta * 2,
-      longitudeDelta: region.longitudeDelta * 2,
+      latitudeDelta: region.latitudeDelta * 6,
+      longitudeDelta: region.longitudeDelta * 6,
     };
     setRegion(tempRegion)
       //makes the map appear to "move" to the user

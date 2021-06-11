@@ -153,6 +153,7 @@ export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
       debug('useLayoutEffect:ProfileLoading::', jit.profileLoading)
       // const cache = Util.dtoToJson(jit.driverCache)
       if (jit.isAuthenticated) {
+        jit.getAllActiveDriver();
         nextScreen();
       }
     }, [jit?.isAuthenticated, jit?.profileLoading])

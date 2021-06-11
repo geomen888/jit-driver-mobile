@@ -97,6 +97,12 @@ export default class JitUIStore extends BaseStore {
   }
 
   @bind
+  public getAllActiveDriver() {
+    const { data: { token } } =  this.profileCache;
+    return this.jitStore.loadWssDriversActiveType(token);
+  }
+
+  @bind
   public driverLogin(phone: string) {
     return this.jitStore.loadDriverLoginType(phone);
   }

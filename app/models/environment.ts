@@ -1,4 +1,5 @@
-import { Api } from "../services/api"
+import { Api } from '../services/api';
+import { Util } from '../utils';
 
 let ReactotronDev
 if (__DEV__) {
@@ -23,7 +24,8 @@ export class Environment {
   async setup() {
     // allow each service to setup
     if (__DEV__) {
-      await this.reactotron.setup()
+      await Util.delay(1000);
+      await this.reactotron.setup();
     }
     await this.api.setup()
   }

@@ -1,6 +1,6 @@
 import Tron from "reactotron-react-native"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { RootStore } from "../../models/root-store/root-store"
+import { RootStore, RootStoreModel } from "../../models/root-store/root-store"
 import { onSnapshot } from "mobx-state-tree"
 import { ReactotronConfig, DEFAULT_REACTOTRON_CONFIG } from "./reactotron-config"
 import { mst } from "reactotron-mst"
@@ -65,7 +65,7 @@ export class Reactotron {
    */
   constructor(config: ReactotronConfig = DEFAULT_REACTOTRON_CONFIG) {
     // merge the passed in config with some defaults
-    console.log('reactotron::config:', config);
+    // console.log('reactotron::config:', config);
     this.config = {
       host: "localhost",
       useAsyncStorage: true,
@@ -113,7 +113,7 @@ export class Reactotron {
 
     // only run this in dev... metro bundler will ignore this block: 🎉
     if (__DEV__) {
-      console.log('config:', this.config);
+      // console.log('config:', this.config);
       // configure reactotron
       Tron.configure({
         name: this.config.name || require("../../../package.json").name,
@@ -148,7 +148,7 @@ export class Reactotron {
         command: "resetStore",
         handler: () => {
           console.tron.log("resetting store")
-          console.log("resetting store")
+          console.log("resetting store");
           clear()
         },
       })

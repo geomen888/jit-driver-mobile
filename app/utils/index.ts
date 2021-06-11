@@ -22,6 +22,15 @@ export class Util {
         return p;
       }
 
+    public static isJsonParsable(str: string): boolean {
+        try {
+          JSON.parse(str);
+        } catch (e) {
+          return false;
+        }
+        return true;
+      }
+
     public static dtoToJson(obj: any): JsonObject {
         return JSON.parse(JSON.stringify(obj));
       }

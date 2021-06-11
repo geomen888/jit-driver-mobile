@@ -14,9 +14,10 @@ import {
 } from './types';
 import { TWsCb, IToken } from '../types';
 import { put, takeLatest, call, fork, take } from 'redux-saga/effects';
-import { eventChannel } from 'redux-saga';
+import { eventChannel, END } from 'redux-saga';
 
-import { isApiType, isWssType, connection } from './utils';
+import { isApiType, isWssType } from './utils';
+import { Util } from '../utils';
 import { EventType } from '../common/enums/socket-event.type';
 import invariant from './invariant';
 import SagaRunner from './SagaRunner';
@@ -24,7 +25,7 @@ import SagaRunner from './SagaRunner';
 import { DEBUG } from '@env';
 
 const debug = Debug('framework:BaseStore::');
-const error = Debug('framework:BaseStore:connect:error:');
+const error = Debug('framework:BaseStore:error::');
 debug.enabled = DEBUG || true;
 error.enabled = DEBUG || true;
 
@@ -52,9 +53,6 @@ export default class BaseStore {
   public static wss: WebSocket;
   public static socketReady = false;
   public static wssUrl: string;
-  private static ping: NodeJS.Timer;
-
-
 
   public http: AxiosInstance;
   public sagaRunner: SagaRunner;
@@ -75,33 +73,62 @@ export default class BaseStore {
     BaseStore.wss = void 0;
   }
 
+  private static async connection({ timeout = 250000 }: { timeout?: number }) {
+    const isOpened = () => {
+      debug('connection:isOpened:readyState::', BaseStore?.wss?.readyState);
+      debug('connection:isOpened:typeof:readyState::', typeof BaseStore?.wss?.readyState);
+      debug('connection:isOpened:WebSocket.CONNECTING::', WebSocket.CONNECTING);
+      debug('connection:isOpened:typeof:WebSocket.CONNECTING::', typeof WebSocket.CONNECTING);
+      debug('connection:isOpened:predicate::', (BaseStore.wss.readyState >= WebSocket.CONNECTING));
+
+      return (BaseStore?.wss?.readyState >= WebSocket.CONNECTING);
+    };
+    debug('connection:readyState::', BaseStore?.wss?.readyState);
+    if (WebSocket.CONNECTING !== BaseStore?.wss?.readyState || 0) {
+      return isOpened();
+    }
+    else {
+      const intrasleep = 2500
+      const ttl = timeout / intrasleep // time to loop
+      let loop = 0
+      while (BaseStore?.wss?.readyState === WebSocket.CONNECTING && loop < ttl) {
+        await new Promise(resolve => setTimeout(resolve, intrasleep));
+        loop++;
+      }
+
+      return isOpened()
+    }
+  }
+
   public static async connectWss({ token }: IToken): Promise<void> {
     try {
-    debug('connectWss:token:: ', token);
-    debug('connectWss:wssUrl:: ', BaseStore.wssUrl);
-    debug('connectWss:wss:: ', BaseStore.wss);
+      debug('connectWss:token:: ', token);
+      debug('connectWss:wssUrl:: ', BaseStore.wssUrl);
+      // debug('connectWss:wss:: ', BaseStore.wss);
 
-    BaseStore.wss = new WebSocket(BaseStore.wssUrl, null, {
+      BaseStore.wss = new WebSocket(BaseStore.wssUrl, null, {
         headers: {
           "X-Amz-Security-Token": token,
         }
       });
-    BaseStore.socketReady = await connection(BaseStore.wss);
-    debug('connectWss:open:: ', BaseStore.socketReady);
+      BaseStore.socketReady = await BaseStore.connection({});
+      debug('connectWss:open:: ', BaseStore.socketReady);
 
-    if (!BaseStore.socketReady) {
-      throw new Error("aws wss failed");
+      if (!BaseStore.socketReady) {
+        throw new Error("aws wss failed");
+      }
+      await Util.delay(2500)
+      BaseStore.sendData();
+
+      return;
     }
-
-    BaseStore.ping = setInterval(() => BaseStore.sendData(), 15000);
-    return;
-   }
-   catch (e) {
-     console.error('connectWss:e', e);
-   }
+    catch (e) {
+      console.error('connectWss:e', e);
+    }
   };
 
-  private static subscribeSocketChannel(token: string, instance: string) {
+  private static subscribeSocketChannel(token: string, instance: EventType) {
+
     return eventChannel((emit) => {
       const handler = (data: any) => {
         debug(`subscribeSocketChannel:data:${JSON.stringify(data)}`);
@@ -120,56 +147,72 @@ export default class BaseStore {
         emit(new Error(errorEvent.message));
       };
 
-      const closeHandler = (e: any) => {
-          debug.log(e, 'Socket is closed.');
-          clearInterval(BaseStore.ping);
-          (async () => {
-          BaseStore.wss = void 0;
-          if (BaseStore.socketReady) {
-            await BaseStore.connectWss({ token });
-          }
+      const closeHandler = (e: WS.CloseEvent) => {
+        debug(e, 'Socket is closed.');
+        (async () => {
+          await (await Util.delay(25)).cancel()
+          await BaseStore.connectWss({ token });
         })()
       }
       // setup the subscription
-      // socket.on('ping', pingHandler);
       BaseStore.wss.onerror = errorHandler;
       BaseStore.wss.onclose = closeHandler;
-      BaseStore.wss.onmessage = handler;
-      // BaseStore.wss.on(instance, handler);
+      BaseStore.wss.onmessage = (event: WebSocketMessageEvent) => {
+        try {
+          debug('WebSocket message received:event::', event);
+          const { data } = event;
+          debug('WebSocket message received:data::', data);
+          if (Util.isJsonParsable(data) && BaseStore.wss.readyState === WebSocket.OPEN) {
+            const { action, payload } = JSON.parse(data) as { action: EventType, payload: any };
+            if (action === instance) {
+              handler(payload);
+            }
 
+            if (action === EventType.PONG && BaseStore.wss.readyState === WebSocket.OPEN) {
+              (async () => {
+                await Util.delay(15000)
+                BaseStore.sendData();
+              })()
+            }
+          }
+        } catch (e) {
+          error(e);
+        }
+      };
       return () => {
-        // socket.off('ping', pingHandler);
-        BaseStore.socketReady = false;
-        BaseStore.wss.onclose({});
+        BaseStore.wss.close(1005, 'close');
+        emit(END);
       };
     });
   }
 
-  private static * readWss(event: string,  token: string, type: WssCallType, callback: TWsCb) {
+  private static * readWss(event: string, token: string, type: WssCallType, callback: TWsCb) {
     const socketChannel = yield call(BaseStore.subscribeSocketChannel, token, event);
     while (true) {
       const { data, status, message } = yield take(socketChannel);
       debug(`read:logged_${type}:status:`, status);
-      debug(`read:logged_${type}:date:`, data);
+      debug(`read:logged_${type}:data:`, data);
       const feedback = callback(type, status, data, message);
       debug(`read:logged_${type}:feedback:`, feedback);
       yield put(feedback);
     }
   }
 
-  private static sendData(message: JsonObject = { action: 'PING' }): void {
-    BaseStore.wss!.send(JSON.stringify({
+  private static async sendData(message: JsonObject = { action: EventType.PING }): Promise<void> {
+    if (BaseStore.wss.readyState === WebSocket.OPEN) {
+      BaseStore.wss.send(JSON.stringify({
         ...message,
         nonce: uuid(),
-    }));
-}
+      }));
+    }
+  }
 
   private static * writeWss<T extends BaseRecord>(type: WssCallType, callback: TWsCb, data: T) {
     // const pred = BaseStore.wss.readyState;
     // debug('writeWss::', pred);
     const { key } = data;
-        // debug('runSaga:ws::', BaseStore.wss);
-   //  const msg = JSON.stringify({ action: key, [key]: data[key] });
+    // debug('runSaga:ws::', BaseStore.wss);
+    //  const msg = JSON.stringify({ action: key, [key]: data[key] });
     debug(`write:logged_${type}:feedback:key::`, key);
     BaseStore.sendData({ action: key, [key]: data[key] })
     // BaseStore.wss.send(msg);
@@ -265,22 +308,22 @@ export default class BaseStore {
     this.runSaga(function* () {
       yield takeLatest(wssCallType.REQUEST,
         function* <T extends BaseRecord>({ payload }: ActionWithPayload<{ token: string, type: EventType, data?: T }>) {
-        try {
-          yield call(func, payload);
-          const { type: event, data, token } = payload;
-          // debug('runSaga:event::', event);
-          // debug('runSaga:ws::', BaseStore.wss);
-          if (event === EventType.MESSAGE) {
-            yield fork(BaseStore.writeWss,  wssCallType, BaseStore.checkInstance, data);
-          } else {
-            yield call(BaseStore.readWss,  event, token, wssCallType, BaseStore.checkInstance);
-          }
-        } catch (err) {
-          console.error(err);
+          try {
+            yield call(func, payload);
+            const { type: event, data, token } = payload;
+            // debug('runSaga:event::', event);
+            // debug('runSaga:ws::', BaseStore.wss);
+            if (event === EventType.MESSAGE) {
+              yield fork(BaseStore.writeWss, wssCallType, BaseStore.checkInstance, data);
+            } else {
+              yield fork(BaseStore.readWss, event, token, wssCallType, BaseStore.checkInstance);
+            }
+          } catch (err) {
+            console.error(err);
 
-          yield put({ type: wssCallType.FAILURE, payload: err });
-        }
-      });
+            yield put({ type: wssCallType.FAILURE, payload: err });
+          }
+        });
     });
   }
 

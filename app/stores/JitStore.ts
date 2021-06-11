@@ -1,8 +1,9 @@
 import { observable, runInAction, ObservableMap } from 'mobx';
-import { put, call, take, takeLatest, all, select } from 'redux-saga/effects';
+import { put, call, take, takeLatest, all } from 'redux-saga/effects';
 import { EventType } from '../common/enums/socket-event.type';
 import { GankType } from '../constants';
 import Debug from 'debug';
+
 import {
   GankDataCache,
   JitDriverCache,
@@ -161,6 +162,7 @@ export default class JitStore extends BaseStore {
     const cache = (self.driversCache.get(type) as unknown) as { data: IToken[], isAuthenticated: boolean };
 
     yield put({ type: JitStore.GET_DRIVER_LOGIN_TYPE.REQUEST, payload: { phone } });
+
     self.rootStore.jitStore.setProfileLoadingStatus(LoadingSatatus.LOADING)
     const sagaAction = yield take(JitStore.GET_DRIVER_LOGIN_TYPE.SUCCESS);
     debug('handleDriverLoginRequest:sagaAction::', sagaAction);
@@ -177,6 +179,10 @@ export default class JitStore extends BaseStore {
       self.driversCache.set('iam', { data: cache.data, isAuthenticated: true })
       self.profileCacheLoading = false;
     });
+    // let token: string =  self.rootStore.jitStore.getToken;
+
+    // yield put({ type: JitStore.GET_DRIVERS_ACTIVE_TYPE.REQUEST, payload: { token, type: EventType.COORDINATES } });
+
   }
 
   @apiCallWith('GET_NEXT_PAGE_DATA_OF_TYPE')
@@ -207,7 +213,7 @@ export default class JitStore extends BaseStore {
   public async wssSetCoordinatesDriverType(payload: { token: string, data: any, type: EventType }) {
     await this.connectWss(payload);
      // debug('wssSetCoordinatesDriverType:: ', BaseStore.wss);
-     return this.wss;
+    return this.wss;
   }
 
   public loadNextPageOfType(type: GankType = GankType.All) {
@@ -226,6 +232,7 @@ export default class JitStore extends BaseStore {
   }
 
   public loadWssDriversActiveType(token: string) {
-    this.dispatch({ type: JitStore.GET_DRIVERS_ACTIVE_TYPE.PRE_REQUEST, payload: { token } });
+    this.dispatch({ type: JitStore.GET_DRIVERS_ACTIVE_TYPE.PRE_REQUEST,
+                    payload: { token, type: EventType.COORDINATES } });
   }
 }
