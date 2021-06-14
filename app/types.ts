@@ -47,12 +47,13 @@ export interface GankDataItem {
 }
 
 export interface IDriverItem {
-  _id: string;
+  id: string;
   location: number[];
   phone: string;
   reg: string;
   name: string;
   createdAt: DateString;
+  coordinates: number[];
 }
 
 export interface IToken {

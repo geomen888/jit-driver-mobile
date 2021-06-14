@@ -3,15 +3,17 @@ import { DriverModel, DriverSnapshot } from "../driver/driver"
 import { ProfileModel, ProfileSnapshot } from '../my-account/profile';
 import { CharacterApi } from "../../services/api/character-api"
 import { withEnvironment } from "../extensions/with-environment"
+import { OrderNotificationSnapshot } from '../my-account/notifications';
 import { LoadingSatatus } from '../../common/enums/profile-loading-status.type'
+import { Util } from '../../utils';
 /**
  * Example store containing Rick and Morty characters
  */
 export const JitStoreModel = types
   .model("JitStore")
   .props({
-    drivers: types.optional(types.array(DriverModel), []),
-    profile: types.optional(ProfileModel, {}),
+    drivers: types.maybeNull(types.array(DriverModel)),
+    profile: types.maybeNull(ProfileModel),
     stateProfile: types.maybe(types.enumeration('ProfileLoadingStatus', Object.values(LoadingSatatus))),
     stateDrivers: types.maybe(types.enumeration('DriversLoadingStatus', Object.values(LoadingSatatus))),
   })
@@ -42,7 +44,9 @@ export const JitStoreModel = types
       self.profile.isAuthenticated = false;
       self.stateProfile = LoadingSatatus.IDLE;
       // console.log('resetProfile::', self.profile);
-
+    },
+    addProfileNotifications: (noty: OrderNotificationSnapshot) => {
+      self.profile.orderNotifications.replace([...self.profile.getNotifications, noty])
     },
     setProfileLoadingStatus: (status: LoadingSatatus) => {
       self.stateProfile = status;
@@ -56,12 +60,20 @@ export const JitStoreModel = types
 
         return self.stateProfile || LoadingSatatus.IDLE
       },
+      get getDriversLocations() {
+
+        return { data: self.drivers
+           ? self.drivers.map(item => Util.dtoToJson(item))
+           : []
+           }
+      },
       get isAuthenticated() {
         return self.profile.isAuthenticate
       },
       get getProfile() {
         return ({
           ...self.profile,
+          notifications: self.profile.getNotifications,
           isAuthenticated: self.profile.isAuthenticate
         })
       }

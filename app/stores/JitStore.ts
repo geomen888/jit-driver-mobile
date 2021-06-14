@@ -1,7 +1,12 @@
 import { observable, runInAction, ObservableMap } from 'mobx';
+import { v4 as uuid } from 'uuid';
 import { put, call, take, takeLatest, all } from 'redux-saga/effects';
 import { EventType } from '../common/enums/socket-event.type';
+import { CallStateType } from '../common/enums/ami-call.type';
 import { GankType } from '../constants';
+import { DriverSnapshot } from "../models/driver/driver";
+import { IOrderNotification } from '../models/my-account/notifications';
+
 import Debug from 'debug';
 
 import {
@@ -39,9 +44,14 @@ export default class JitStore extends BaseStore {
   @apiTypeDef public static readonly GET_DRIVER_LOGIN_TYPE: ApiCallType;
   @wssTypeDef public static readonly GET_DRIVERS_ACTIVE_TYPE: WssCallType;
   @wssTypeDef public static readonly SET_COORDINATES_DRIVER_TYPE: WssCallType;
+  @wssTypeDef public static readonly GET_ORIGINATE_CALL_DRIVER_TYPE: WssCallType;
+  @wssTypeDef public static readonly ON_CALL_STATE_DRIVER_TYPE: WssCallType;
+  @wssTypeDef public static readonly ON_NOTIFICATION_DRIVER_TYPE: WssCallType;
+
 
   public dataCache: ObservableMap<string, GankDataCache> = observable.map({});
   public driversCache: ObservableMap<string, JitDriverCache> = observable.map({});
+  public callStateCache: ObservableMap<string, CallStateType> = observable.map({});
 
   @observable
   public dataCacheLoading = false;
@@ -51,6 +61,7 @@ export default class JitStore extends BaseStore {
 
   @observable
   public profileCacheLoading = false;
+
 
   constructor(public key: string, public rootStore: RootStore) {
     super(key);
@@ -65,12 +76,50 @@ export default class JitStore extends BaseStore {
       takeLatest(JitStore.GET_DRIVER_LOGIN_TYPE.PRE_REQUEST, this.handleDriverLoginTypeRequest),
       takeLatest(JitStore.GET_DRIVERS_ACTIVE_TYPE.PRE_REQUEST, this.handleGetWssDriversActiveType),
       takeLatest(JitStore.SET_COORDINATES_DRIVER_TYPE.PRE_REQUEST, this.handleSetWssCoordinatesDriverType),
+      takeLatest(JitStore.GET_ORIGINATE_CALL_DRIVER_TYPE.PRE_REQUEST, this.handleGetWssOriginateCallDriverType),
+      // takeLatest(JitStore.ON_CALL_STATE_DRIVER_TYPE.PRE_REQUEST, this.handleGetWssOriginateCallDriverType),
+      takeLatest(JitStore.ON_NOTIFICATION_DRIVER_TYPE.PRE_REQUEST, this.handleGetWssNotificationDriverType),
+
     ])
   }
 
   @bind
+  public *handleGetWssOriginateCallDriverType({ payload }: ActionWithPayload<{
+     token: string;
+     type: EventType;
+     data: {
+      opponentId: string;
+     }
+    }>) {
+    try {
+      const self: JitStore = yield this;
+      const { type = 'call', token, data: { opponentId } } = payload;
+      yield call<any>(runInAction, () => {
+        debug('handleGetWssOriginateCallDriverType:callStateCache::', JSON.stringify(self.callStateCache));
+        if (!self.callStateCache.has(type)) {
+          self.callStateCache.set(type, CallStateType.PREPARE);
+        }
+      }); //
+
+      yield put({ type: JitStore.GET_ORIGINATE_CALL_DRIVER_TYPE.REQUEST,
+                  payload: { type, token, data: { call: opponentId, key: 'call' }}  });
+      const sagaAction = yield take(JitStore.GET_ORIGINATE_CALL_DRIVER_TYPE.SUCCESS);
+      const res = sagaAction.payload as JitWssResponse<CallStateType>;
+
+      yield call<any>(runInAction, () => {
+      debug('handleGetWssOriginateCallDriverType:res::', JSON.stringify(res));
+      self.callStateCache.set(type, CallStateType.ORIGINATE);
+    });
+    } catch (e) {
+      error('handleGetWssOriginateCallDriverType:e::', e);
+    }
+  }
+
+  @bind
   public *handleSetWssCoordinatesDriverType({ payload }: ActionWithPayload<{
-    token: string; data: { coordinates: number[] }; type: EventType
+    token: string;
+    data: { coordinates: number[] };
+    type: EventType
   }>) {
     const { data: { coordinates = [] }, type = EventType.MESSAGE, token } = payload;
     // const state = yield select(state => state);
@@ -84,9 +133,42 @@ export default class JitStore extends BaseStore {
   }
 
   @bind
-  public *handleGetWssDriversActiveType({ payload }: ActionWithPayload<{ token: string; type: string }>) {
+  public *handleGetWssNotificationDriverType({ payload }: ActionWithPayload<{ token: string; type: EventType }>) {
     const self: JitStore = yield this;
-    const { type = 'gps', token } = payload;
+    const { type = EventType.NOTIFICATION, token } = payload;
+    yield call<any>(runInAction, () => {
+      debug('handleGetWssNotificationDriverType:dataCache::', JSON.stringify(self.dataCache));
+      if (!self.driversCache.has(type)) {
+        self.driversCache.set(type, { data: [] });
+      }
+      self.profileCacheLoading = true;
+    });
+    const cache = (self.driversCache.get(type) as unknown) as { data: IOrderNotification[] };
+
+    yield put({ type: JitStore.ON_NOTIFICATION_DRIVER_TYPE.REQUEST, payload: { type, token } });
+    const sagaAction = yield take(JitStore.ON_NOTIFICATION_DRIVER_TYPE.SUCCESS);
+    const res = sagaAction.payload as JitWssResponse<IOrderNotification>;
+
+    yield call<any>(runInAction, () => {
+      debug('handleGetWssNotificationDriverType:res::', res);
+      cache.data = cache.data.concat(res.data || []);
+      const notification: IOrderNotification = {
+        id: uuid(),
+        // type: DriverNotificationType.ORDER_CONFIRMATION,
+        orderId: res.data?.orderId,
+        created: new Date().toISOString()
+      };
+      debug('handleGetWssNotificationDriverType:notification::', notification);
+
+      self.rootStore.jitStore.addProfileNotifications(notification)
+      self.profileCacheLoading = false;
+    });
+  }
+
+  @bind
+  public *handleGetWssDriversActiveType({ payload }: ActionWithPayload<{ token: string; type: EventType }>) {
+    const self: JitStore = yield this;
+    const { type = EventType.COORDINATES, token } = payload;
     yield call<any>(runInAction, () => {
       debug('handleWssActiveDrivers:dataCache::', JSON.stringify(self.dataCache));
       if (!self.driversCache.has(type)) {
@@ -103,6 +185,16 @@ export default class JitStore extends BaseStore {
     yield call<any>(runInAction, () => {
       debug('handleWssActiveDrivers:res::', res);
       cache.data = cache.data.concat(res.data || []);
+      const drivers = res.data.map(it => {
+        const { coordinates: [lat, lng], id } = it;
+        return ({
+          id,
+          lat,
+          lng
+        })
+      }) as DriverSnapshot[];
+
+      self.rootStore.jitStore.saveDrivers(drivers)
       self.driverCacheLoading = false;
     });
   }
@@ -202,17 +294,37 @@ export default class JitStore extends BaseStore {
     return res;
   }
 
-  @wssCallWith('GET_DRIVERS_ACTIVE_TYPE')
-  public async wssGetWssDriversAciveType(payload: { token: string, type: EventType }) {
+  @wssCallWith('GET_ORIGINATE_CALL_DRIVER_TYPE')
+  public async wssGetOriginateCallDriverType(payload: {
+     token: string,
+     data: any,
+     type: EventType
+     }) {
+
     await this.connectWss(payload);
 
     return this.wss;
   }
 
+  @wssCallWith('GET_DRIVERS_ACTIVE_TYPE')
+  public async wssGetWssDriversActiveType(payload: { token: string, type: EventType }) {
+    await this.connectWss(payload);
+
+    return this.wss;
+  }
+
+  @wssCallWith('ON_NOTIFICATION_DRIVER_TYPE')
+  public async wssGetWssNotificationDriversType(payload: { token: string, type: EventType }) {
+    await this.connectWss(payload);
+
+    return this.wss;
+  }
+
+
   @wssCallWith('SET_COORDINATES_DRIVER_TYPE')
   public async wssSetCoordinatesDriverType(payload: { token: string, data: any, type: EventType }) {
     await this.connectWss(payload);
-     // debug('wssSetCoordinatesDriverType:: ', BaseStore.wss);
+    // debug('wssSetCoordinatesDriverType:: ', BaseStore.wss);
     return this.wss;
   }
 
@@ -226,13 +338,33 @@ export default class JitStore extends BaseStore {
     this.dispatch({ type: JitStore.GET_DRIVER_LOGIN_TYPE.PRE_REQUEST, payload: { phone } });
   }
 
+  public loadWssDriversActiveType(token: string) {
+    this.dispatch({
+      type: JitStore.GET_DRIVERS_ACTIVE_TYPE.PRE_REQUEST,
+      payload: { token, type: EventType.COORDINATES }
+    });
+  }
+
+  public loadWssNotificationDriversType(token: string) {
+    this.dispatch({
+      type: JitStore.ON_NOTIFICATION_DRIVER_TYPE.PRE_REQUEST,
+      payload: { token, type: EventType.NOTIFICATION }
+    });
+  }
+
   public loadCoordinatesDriverType(token: string, data: { coordinates: number[] }) {
     debug('setCoordinatesDriverType:token::', token)
     this.dispatch({ type: JitStore.SET_COORDINATES_DRIVER_TYPE.PRE_REQUEST, payload: { token, data } });
   }
 
-  public loadWssDriversActiveType(token: string) {
-    this.dispatch({ type: JitStore.GET_DRIVERS_ACTIVE_TYPE.PRE_REQUEST,
-                    payload: { token, type: EventType.COORDINATES } });
+  public originateWssCallDriverType(token: string, data: { opponentId: string }) {
+    this.dispatch({
+      type: JitStore.GET_ORIGINATE_CALL_DRIVER_TYPE.PRE_REQUEST,
+      payload: { token, type: EventType.MESSAGE, data }
+    });
+    // this.dispatch({
+    //   type: JitStore.GET_ORIGINATE_CALL_DRIVER_TYPE.PRE_REQUEST,
+    //   payload: { token, type: EventType.CALL }
+    // });
   }
 }

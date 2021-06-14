@@ -4,7 +4,7 @@ import { Instance, SnapshotOut, types } from "mobx-state-tree"
  * Rick and Morty character model.
  */
 export const DriverModel = types.model("Driver").props({
-  _id: types.maybe(types.string),
+  id: types.maybe(types.string),
   name: types.maybe(types.string),
   reg: types.maybe(types.string),
   status: types.maybe(types.string),

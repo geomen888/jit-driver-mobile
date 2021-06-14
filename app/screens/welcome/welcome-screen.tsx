@@ -19,7 +19,7 @@ import { observer } from "mobx-react-lite"
 import { Button, Header, Screen, Text, Wallpaper } from "../../components"
 import { color, spacing, typography } from "../../theme"
 import JitUIStore from '../../stores/JitUIStore';
-
+import { Util } from '../../utils';
 // tslint:disable-next-line: no-var-requires
 const bowserLogo = require("./bowser.png");
 
@@ -153,8 +153,12 @@ export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
       debug('useLayoutEffect:ProfileLoading::', jit.profileLoading)
       // const cache = Util.dtoToJson(jit.driverCache)
       if (jit.isAuthenticated) {
-        jit.getAllActiveDriver();
-        nextScreen();
+        (async() => {
+          jit.getAllActiveDriver();
+          await Util.delay(500);
+          jit.listenNotificationDriver();
+          nextScreen();
+        })()
       }
     }, [jit?.isAuthenticated, jit?.profileLoading])
 

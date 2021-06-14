@@ -43,7 +43,7 @@ type BaseStoreConfig = {
 };
 
 interface BaseRecord {
-  readonly key: Readonly<string>
+  readonly key: Readonly<EventType>
 }
 
 export default class BaseStore {
@@ -53,6 +53,14 @@ export default class BaseStore {
   public static wss: WebSocket;
   public static socketReady = false;
   public static wssUrl: string;
+  private static readonly eventMap = new Map<EventType, (arg: any) => object>([
+    [EventType.COORDINATES, function(data: any) { return ({
+      [EventType.COORDINATES]: data[EventType.COORDINATES]
+    })}],
+    [EventType.CALL, function(data: any) { return ({
+       opponentId: data[EventType.CALL]
+    })}]
+  ]);
 
   public http: AxiosInstance;
   public sagaRunner: SagaRunner;
@@ -76,10 +84,8 @@ export default class BaseStore {
   private static async connection({ timeout = 250000 }: { timeout?: number }) {
     const isOpened = () => {
       debug('connection:isOpened:readyState::', BaseStore?.wss?.readyState);
-      debug('connection:isOpened:typeof:readyState::', typeof BaseStore?.wss?.readyState);
       debug('connection:isOpened:WebSocket.CONNECTING::', WebSocket.CONNECTING);
-      debug('connection:isOpened:typeof:WebSocket.CONNECTING::', typeof WebSocket.CONNECTING);
-      debug('connection:isOpened:predicate::', (BaseStore.wss.readyState >= WebSocket.CONNECTING));
+      debug('connection:isOpened:predicate::', (BaseStore?.wss?.readyState >= WebSocket.CONNECTING));
 
       return (BaseStore?.wss?.readyState >= WebSocket.CONNECTING);
     };
@@ -105,25 +111,24 @@ export default class BaseStore {
       debug('connectWss:token:: ', token);
       debug('connectWss:wssUrl:: ', BaseStore.wssUrl);
       // debug('connectWss:wss:: ', BaseStore.wss);
-
       BaseStore.wss = new WebSocket(BaseStore.wssUrl, null, {
-        headers: {
-          "X-Amz-Security-Token": token,
-        }
-      });
+          headers: {
+            "X-Amz-Security-Token": token,
+          }
+        });
       BaseStore.socketReady = await BaseStore.connection({});
       debug('connectWss:open:: ', BaseStore.socketReady);
-
       if (!BaseStore.socketReady) {
         throw new Error("aws wss failed");
       }
-      await Util.delay(2500)
+
+      await Util.delay(1500)
       BaseStore.sendData();
 
       return;
     }
     catch (e) {
-      console.error('connectWss:e', e);
+      error('connectWss:e', e);
     }
   };
 
@@ -144,7 +149,7 @@ export default class BaseStore {
         error('subscribeSocketChannel:errorHandler: ', errorEvent.message);
         BaseStore.wss.close();
         // create an Error object and put it into the channel
-        emit(new Error(errorEvent.message));
+        emit(errorEvent.message);
       };
 
       const closeHandler = (e: WS.CloseEvent) => {
@@ -162,13 +167,12 @@ export default class BaseStore {
           debug('WebSocket message received:event::', event);
           const { data } = event;
           debug('WebSocket message received:data::', data);
-          if (Util.isJsonParsable(data) && BaseStore.wss.readyState === WebSocket.OPEN) {
+          if (Util.isJsonParsable(data) && BaseStore?.wss?.readyState === WebSocket.OPEN) {
             const { action, payload } = JSON.parse(data) as { action: EventType, payload: any };
-            if (action === instance) {
+            if (action === instance && payload) {
               handler(payload);
             }
-
-            if (action === EventType.PONG && BaseStore.wss.readyState === WebSocket.OPEN) {
+            if (action === EventType.PONG && BaseStore?.wss?.readyState === WebSocket.OPEN) {
               (async () => {
                 await Util.delay(15000)
                 BaseStore.sendData();
@@ -189,17 +193,19 @@ export default class BaseStore {
   private static * readWss(event: string, token: string, type: WssCallType, callback: TWsCb) {
     const socketChannel = yield call(BaseStore.subscribeSocketChannel, token, event);
     while (true) {
-      const { data, status, message } = yield take(socketChannel);
-      debug(`read:logged_${type}:status:`, status);
-      debug(`read:logged_${type}:data:`, data);
+      const responce = yield take(socketChannel);
+      debug('read:message received:responce::', responce);
+      const { data, status, message } = responce;
+      debug(`read:logged_${JSON.stringify(type)}:status:`, status);
+      debug(`read:logged_${JSON.stringify(type)}:data:`, data);
       const feedback = callback(type, status, data, message);
-      debug(`read:logged_${type}:feedback:`, feedback);
+      debug(`read:logged_${JSON.stringify(type)}:feedback:`, feedback);
       yield put(feedback);
     }
   }
 
   private static async sendData(message: JsonObject = { action: EventType.PING }): Promise<void> {
-    if (BaseStore.wss.readyState === WebSocket.OPEN) {
+    if (BaseStore.wss && BaseStore.wss.readyState) {
       BaseStore.wss.send(JSON.stringify({
         ...message,
         nonce: uuid(),
@@ -211,19 +217,25 @@ export default class BaseStore {
     // const pred = BaseStore.wss.readyState;
     // debug('writeWss::', pred);
     const { key } = data;
+
+    debug('writeWss:key::', key);
+    debug('writeWss:data::', data);
+
+    const getPayload = BaseStore.eventMap.get(key).bind(null, data)();
+    debug('writeWss:getPayload::', getPayload);
     // debug('runSaga:ws::', BaseStore.wss);
     //  const msg = JSON.stringify({ action: key, [key]: data[key] });
-    debug(`write:logged_${type}:feedback:key::`, key);
-    BaseStore.sendData({ action: key, [key]: data[key] })
+    debug(`write:logged_${JSON.stringify(type)}:feedback:key::`, key);
+    BaseStore.sendData({ action: key,  ...getPayload })   // [key]: data[key]
     // BaseStore.wss.send(msg);
     const feedback = callback(type, 1, 'Ok', null);
-    debug(`write:logged_${type}:feedback:`, feedback);
+    debug(`write:logged_${JSON.stringify(type)}:feedback:`, feedback);
     yield put(feedback);
   }
 
   private static checkInstance(type: WssCallType, status: number, data: any, message: Error | string): any {
     return status
-      ? ({ type: type.SUCCESS, payload: data })
+      ? ({ type: type.SUCCESS, payload: { data } })
       : ({ type: type.FAILURE, payload: message })
   }
 
@@ -291,7 +303,6 @@ export default class BaseStore {
 
   private runCallWssWithSaga(funcName: string, wssCallWithConfig: WssCallWithConfig) {
     const func = this[funcName];
-
     const { wssCallTypeName } = wssCallWithConfig;
     debug('runCallWssWithSaga::', this[wssCallTypeName]);
     debug('runCallWssWithSaga:constructor::', this.constructor[wssCallTypeName]);
@@ -304,14 +315,13 @@ export default class BaseStore {
     );
     debug('runCallWssWithSaga:func::', func);
     debug('runCallWssWithSaga:funcName::', funcName);
-
     this.runSaga(function* () {
       yield takeLatest(wssCallType.REQUEST,
         function* <T extends BaseRecord>({ payload }: ActionWithPayload<{ token: string, type: EventType, data?: T }>) {
           try {
             yield call(func, payload);
             const { type: event, data, token } = payload;
-            // debug('runSaga:event::', event);
+            debug('runSaga:event::', event);
             // debug('runSaga:ws::', BaseStore.wss);
             if (event === EventType.MESSAGE) {
               yield fork(BaseStore.writeWss, wssCallType, BaseStore.checkInstance, data);
@@ -320,7 +330,6 @@ export default class BaseStore {
             }
           } catch (err) {
             console.error(err);
-
             yield put({ type: wssCallType.FAILURE, payload: err });
           }
         });

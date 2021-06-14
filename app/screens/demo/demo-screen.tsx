@@ -11,14 +11,16 @@ import {
   ViewStyle,
   StyleSheet,
   Dimensions,
+  Alert
 } from "react-native"
 // import { Icon } from 'react-native-elements'
 import { Button, Divider, Layout, TopNavigation, Icon } from '@ui-kitten/components';
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import { BulletItem, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
+import { IDriverItem } from '../../types';
 import * as Location from 'expo-location';
 import { withStore } from '../../models';
 import { IMapRegion } from './intreface';
@@ -166,7 +168,7 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
   // const [location, setLocation] = useState(null);
   const goBack = () => navigation.goBack()
   const [errorMsg, setErrorMsg] = useState(null);
-  const [location, setLocation] = useState(null);
+  // const [location, setLocation] = useState(null);
   const [region, setRegion] = useState<IMapRegion>({
     latitude: LATITUDE,
     longitude: LONGITUDE,
@@ -176,9 +178,10 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
 
 
   const setLocationRegion = useCallback((loc, reg) => {
-        setLocation(loc);
-        setRegion(reg);
-  }, [])
+    mapView.current.animateToRegion(reg, 1000);
+    jit.coordinatesDriver([loc.latitude, loc.longitude]);
+    setRegion(reg);
+  }, []);
 
 
   useEffect(() => {
@@ -197,12 +200,29 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
         longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
       }
       debug('location::', loc);
-      mapView.current.animateToRegion(tempRegion, 1000);
-      jit.coordinatesDriver([loc.latitude, loc.longitude]);
+      
       setLocationRegion(loc, tempRegion)
     })()
   }, [])
 
+
+  const createTwoButtonAlert = (i: IDriverItem) =>
+    Alert.alert(
+      "Alert Title",
+      "My Alert Msg",
+      [
+        {
+          text: "Cancel",
+          onPress: () => debug("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => {
+           debug("OK Pressed", JSON.stringify(i));
+           jit.originateCallDriver(i.id);
+          }
+        }
+      ]
+    );
 
   const onPressZoomOut = () => {
     const tempRegion = {
@@ -229,13 +249,13 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
     mapView.current.animateToRegion(tempRegion, 1000);
   }
 
-  let text = 'Waiting..';
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = JSON.stringify(location);
+  // let text = 'Waiting..';
+  // if (errorMsg) {
+  //   text = errorMsg;
+  // } else if (location) {
+  //   text = JSON.stringify(location);
 
-  }
+  // }
 
   // const demoReactotron = React.useMemo(
   //   () => async () => {
@@ -298,7 +318,23 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
             showsUserLocation={true}
             style={MAP}
             initialRegion={region}
-          />
+          >
+            {jit.driverCache.data.map(i => {
+              debug('markers::', i);
+              return (
+               <Marker
+               key={i.id}
+               coordinate={{latitude: i.lat,
+                            longitude: i.lng}}
+               title={"title"}
+               description={"description"}
+               onPress={(e) => {
+                 e.stopPropagation();
+                 createTwoButtonAlert(i);
+              }}
+            />
+            )})}
+          </MapView>
                 <View style={SIDE_BOX}>
                   <TouchableOpacity
                       onPress={() => {onPressZoomIn()}}

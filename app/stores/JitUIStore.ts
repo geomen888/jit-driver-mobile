@@ -9,9 +9,16 @@ export default class JitUIStore extends BaseStore {
   @observable
   public showMenu = false;
 
+  @computed
+  get getJitStore() {
+    return this.jitStore
+     ? this.jitStore?.rootStore
+     : null
+  }
+
   @observable
-  public isAuthenticated = this.jitStore
-   ? this.jitStore?.rootStore?.jitStore?.isAuthenticated
+  public isAuthenticated = this.getJitStore
+   ? this.getJitStore.jitStore?.isAuthenticated
    : false;
 
   @observable
@@ -34,7 +41,8 @@ export default class JitUIStore extends BaseStore {
   get driverCache(): JitDriverCache {
     let driverCache;
     if (this.jitStore) {
-      driverCache = this.jitStore.driversCache.get('iam');
+      const { rootStore: { jitStore: store } } = this.jitStore;
+      driverCache = store.getDriversLocations;
     }
     if (!driverCache) {
       driverCache = { data: [] };
@@ -89,6 +97,11 @@ export default class JitUIStore extends BaseStore {
     return this.jitStore.loadNextPageOfType(this.currentType);
   }
 
+  @bind
+  public originateCallDriver(opponentId: string) {
+    const { data: { token } } = this.profileCache;
+    return this.jitStore.originateWssCallDriverType(token, { opponentId });
+  }
 
   @bind
   public coordinatesDriver(coordinates: number[]) {
@@ -100,6 +113,12 @@ export default class JitUIStore extends BaseStore {
   public getAllActiveDriver() {
     const { data: { token } } =  this.profileCache;
     return this.jitStore.loadWssDriversActiveType(token);
+  }
+
+  @bind
+  public listenNotificationDriver() {
+    const { data: { token } } =  this.profileCache;
+    return this.jitStore.loadWssNotificationDriversType(token);
   }
 
   @bind
