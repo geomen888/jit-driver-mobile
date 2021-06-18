@@ -1,4 +1,4 @@
-import { DriverModel } from "./driver"
+import { DriverModel } from "."
 
 test("can be created", () => {
   const instance = DriverModel.create({

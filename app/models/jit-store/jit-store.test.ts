@@ -1,4 +1,4 @@
-import { JitStoreModel } from "./jit-store"
+import { JitStoreModel } from "."
 
 test("can be created", () => {
   const instance = JitStoreModel.create({})

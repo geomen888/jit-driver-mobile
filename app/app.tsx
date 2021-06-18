@@ -57,7 +57,7 @@ BaseStore.init({
  * This is the root component of our app.
  */
 
-function App() {
+const  App = () => {
   const navigationRef = useRef<NavigationContainerRef>()
   const [rootStore, setRootStore] = useState<JitUIStore | undefined>(undefined)
 

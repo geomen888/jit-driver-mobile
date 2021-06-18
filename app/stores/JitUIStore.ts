@@ -1,13 +1,30 @@
-import { computed, observable, action } from 'mobx';
-import { BaseStore, bind } from '../framework';
+import { computed, observable, action, createAtom } from 'mobx';
+import Debug from 'debug';
+import { DEBUG } from '@env';
 import JitStore from './JitStore';
 import { GankType } from '../constants';
 import { GankDataCache, JitDriverCache } from '../types';
-import { IProfile } from '../models';
+import { IProfile, IOrderNotification } from '../models';
+import { BaseStore, bind } from '../framework';
+import { EventType } from '../common/enums/socket-event.type';
+
+const debug = Debug('JitUIStore:');
+const error = Debug('JitUIStore:error:');
+
+debug.enabled = DEBUG || false;
+error.enabled = DEBUG || false;
+
 
 export default class JitUIStore extends BaseStore {
+  private atom: any;
+  private intervalHandler = null;
+  private currentDateTime: Date;
+
   @observable
   public showMenu = false;
+
+  @observable
+  public orderNotification = false;
 
   @computed
   get getJitStore() {
@@ -24,6 +41,9 @@ export default class JitUIStore extends BaseStore {
   @observable
   public currentType: GankType = GankType.All;
 
+  @observable
+  public currentEvent: EventType = EventType.MESSAGE;
+
   @computed
   get dataCache (): GankDataCache {
     let dataCache;
@@ -35,6 +55,20 @@ export default class JitUIStore extends BaseStore {
     }
 
     return dataCache;
+  }
+
+  @computed
+  get dataNCache (): { data: IOrderNotification[] } {
+    let dataNCache;
+    if (this.jitStore) {
+      const payload = this.jitStore.driversCache.get(EventType.NOTIFICATION);
+      dataNCache = { data: payload?.data || [] } ;
+    }
+    if (!dataNCache) {
+      dataNCache = { data: [] };
+    }
+
+    return dataNCache;
   }
 
   @computed
@@ -78,13 +112,19 @@ export default class JitUIStore extends BaseStore {
     return this.jitStore ? this.jitStore.driverCacheLoading : false;
   }
 
-  @action('切换干货类型')
+  @action('switch-type')
   public switchGankType(type: GankType) {
     if (this.showMenu) {
       this.showMenu = false;
     }
 
     this.currentType = type;
+  }
+
+  @action('switch-event')
+  public switchEvent(type: EventType) {
+
+    this.currentEvent = type;
   }
 
   @action('auth')
@@ -115,6 +155,13 @@ export default class JitUIStore extends BaseStore {
     return this.jitStore.loadWssDriversActiveType(token);
   }
 
+  @action('reset-order-noties')
+  public resetOrderNoties(): void {
+    if (this.jitStore && this.jitStore.driversCache.has(EventType.NOTIFICATION)) {
+      this.jitStore.driversCache.set(EventType.NOTIFICATION, { data: [] });
+    }
+  }
+
   @bind
   public listenNotificationDriver() {
     const { data: { token } } =  this.profileCache;
@@ -131,7 +178,58 @@ export default class JitUIStore extends BaseStore {
     this.showMenu = show;
   }
 
+  @action('tick')
+public tick() {
+    this.currentDateTime = new Date()
+    this.atom.reportChanged() // Let MobX know that this data source has changed.
+}
+
+  @action('start-tick')
+public startTicking() {
+    this.tick() // Initial tick.
+    this.intervalHandler = setInterval(() => this.tick(), 1000)
+}
+
+  @action('stop-tick')
+public stopTicking() {
+    clearInterval(this.intervalHandler)
+    this.intervalHandler = null
+}
+
+  @action('get-time')
+  public getTime() {
+  // Let MobX know this observable data source has been used.
+  //
+  // reportObserved will return true if the atom is currently being observed
+  // by some reaction. If needed, it will also trigger the startTicking
+  // onBecomeObserved event handler.
+  if (this.atom.reportObserved()) {
+      return this.currentDateTime
+  } else {
+      // getTime was called, but not while a reaction was running, hence
+      // nobody depends on this value, and the startTicking onBecomeObserved
+      // handler won't be fired.
+      //
+      // Depending on the nature of your atom it might behave differently
+      // in such circumstances, like throwing an error, returning a default
+      // value, etc.
+      return new Date()
+  }
+}
+
   constructor (public key: string, protected jitStore: JitStore) {
     super(key);
+    this.atom = createAtom(
+      // 1st parameter:
+      // - Atom's name, for debugging purposes.
+      "Clock",
+      // 2nd (optional) parameter:
+      // - Callback for when this atom transitions from unobserved to observed.
+      () => this.startTicking(),
+      // 3rd (optional) parameter:
+      // - Callback for when this atom transitions from observed to unobserved.
+      () => this.stopTicking()
+      // The same atom transitions between these two states multiple times.
+  )
   }
 }

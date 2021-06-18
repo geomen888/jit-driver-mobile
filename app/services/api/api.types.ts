@@ -1,5 +1,5 @@
 import { GeneralApiProblem } from "./api-problem"
-import { IDriver } from "../../models/driver/driver"
+import { IDriver } from "../../models/driver"
 
 export interface User {
   id: number

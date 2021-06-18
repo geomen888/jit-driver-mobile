@@ -12,7 +12,7 @@ import {
   Keyboard,
   TextInput,
   ActivityIndicator
-} from "react-native"
+} from "react-native";
 import { withStore } from '../../models';
 import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
@@ -126,7 +126,7 @@ export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
     // debug('payload::', jit);
     // debug('props::', props);
     const navigation = useNavigation()
-    const nextScreen = () => navigation.navigate("demo")
+    const nextScreen = () => navigation.navigate("map")
     const [text, setText] = useState('')
     // const { profileCache = {}, ProfileLoading = LoadingSatatus.IDLE } = jit
     const login = () => {
@@ -166,8 +166,8 @@ export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
       ? (<View style={[LOAD_INDICATOR_CONTAINER, LOAD_INDICATOR_HORIZONTAL]}>
         <ActivityIndicator size="large" color={color.blue} />
       </View>)
-      : (
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      : jit?.profileLoading
+       ? (<TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
           <View testID="WelcomeScreen" style={FULL}>
             <Wallpaper />
             <Screen style={CONTAINER} preset="scroll" backgroundColor={color.transparent}>
@@ -210,5 +210,8 @@ export const WelcomeScreen: FunctionComponent<{ store: IScreenProps }> =
           </View>
         </TouchableWithoutFeedback>
       )
+      : (<View style={[LOAD_INDICATOR_CONTAINER, LOAD_INDICATOR_HORIZONTAL]}>
+        <ActivityIndicator size="large" color={color.blue} />
+      </View>)
   }));
 

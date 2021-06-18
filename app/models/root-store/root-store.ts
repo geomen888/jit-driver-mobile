@@ -1,6 +1,5 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
-import { JitStoreModel } from "../jit-store/jit-store"
-
+import { JitStoreModel } from "../jit-store"
 
 /**
  * A RootStore model.

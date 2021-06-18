@@ -4,5 +4,6 @@ export * from "./root-store/root-store"
 export * from "./root-store/root-store-context"
 export * from "./root-store/setup-root-store"
 export * from "./root-store/root-provider"
-export * from "./my-account/profile"
+export * from "./my-profile"
+
 

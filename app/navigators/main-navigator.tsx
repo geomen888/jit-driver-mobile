@@ -6,7 +6,7 @@
  */
 import React from "react"
 import { createStackNavigator } from "@react-navigation/stack"
-import { WelcomeScreen, DemoScreen, DemoListScreen } from "../screens"
+import { WelcomeScreen, MapScreen, DemoListScreen } from "../screens"
 import { observer } from "mobx-react-lite"
 
 
@@ -26,7 +26,7 @@ import { observer } from "mobx-react-lite"
  */
 export type PrimaryParamList = {
   welcome: undefined
-  demo: undefined
+  map: undefined
   demoList: undefined
 }
 
@@ -34,7 +34,7 @@ export type PrimaryParamList = {
 const Stack = createStackNavigator<PrimaryParamList>()
 
 
-export const MainNavigator = () => {
+export const MainNavigator = observer(() => {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -42,11 +42,11 @@ export const MainNavigator = () => {
       }}
     >
     <Stack.Screen name="welcome" component={WelcomeScreen} />
-    <Stack.Screen name="demo" component={DemoScreen} />
+    <Stack.Screen name="map" component={MapScreen} />
       {/* <Stack.Screen name="demoList" component={DemoListScreen} /> */}
     </Stack.Navigator>
   )
-}
+})
 
 /**
  * A list of routes from which we're allowed to leave the app when

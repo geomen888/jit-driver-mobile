@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from "react"
+import React, { useEffect, useState, useRef, useCallback, FunctionComponent } from "react"
 import Debug from 'debug';
+import { autorun } from 'mobx';
 import { DEBUG } from '@env';
 import {
   Image,
@@ -22,7 +23,7 @@ import { BulletItem, Header, Text, Screen, Wallpaper } from "../../components"
 import { color, spacing } from "../../theme"
 import { IDriverItem } from '../../types';
 import * as Location from 'expo-location';
-import { withStore } from '../../models';
+import { withStore, IOrderNotification } from '../../models';
 import { IMapRegion } from './intreface';
 import JitUIStore from '../../stores/JitUIStore';
 
@@ -68,10 +69,10 @@ const HEADER_TITLE: TextStyle = {
 }
 
 const MAP_WRAPPER: ViewStyle = {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    top: 45,
+  ...StyleSheet.absoluteFillObject,
+  alignItems: 'center',
+  justifyContent: 'flex-end',
+  top: 45,
 }
 const MAP: ViewStyle = {
   ...StyleSheet.absoluteFillObject,
@@ -145,10 +146,10 @@ const HINT: TextStyle = {
 } */
 
 const SIDE_BOX: ViewStyle = {
-    alignSelf: 'flex-end',
-    padding: 10,
-    width: 50,
-    height: "100%",
+  alignSelf: 'flex-end',
+  padding: 10,
+  width: 50,
+  height: "100%",
 }
 
 const SIDE_BOX_ITEMS: ViewStyle = {
@@ -161,11 +162,11 @@ interface IScreenProps {
   jit?: JitUIStore;
 }
 
-export const DemoScreen = observer(withStore((props: { store: IScreenProps }) => {
+export const MapScreen: FunctionComponent<{ store: IScreenProps }> =
+ observer(withStore((props: { store: IScreenProps }) => {
   const { store: { jit } } = props;
   const navigation = useNavigation()
   const mapView = useRef(null);
-  // const [location, setLocation] = useState(null);
   const goBack = () => navigation.goBack()
   const [errorMsg, setErrorMsg] = useState(null);
   // const [location, setLocation] = useState(null);
@@ -176,13 +177,26 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
     longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
   });
 
-
   const setLocationRegion = useCallback((loc, reg) => {
     mapView.current.animateToRegion(reg, 1000);
     jit.coordinatesDriver([loc.latitude, loc.longitude]);
     setRegion(reg);
   }, []);
 
+  useEffect(() => {
+    const disposer = autorun(() => {
+      // debug(jit.getTime());
+      debug('notifications::',  jit.dataNCache.data)
+      if ((jit.dataNCache.data || []).length) {
+      const [notification] = jit.dataNCache.data.slice(-1);
+      debug('notification::',  notification)
+      confirmOrderTwoButtonAlert(notification);
+    }
+  });
+    return () => {
+      disposer()
+    }
+  }, [])
 
   useEffect(() => {
     (async () => {
@@ -200,10 +214,31 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
         longitudeDelta: LATITUDE_DELTA * ASPECT_RATIO
       }
       debug('location::', loc);
-      
       setLocationRegion(loc, tempRegion)
     })()
   }, [])
+
+  const confirmOrderTwoButtonAlert = (i: IOrderNotification) =>
+    Alert.alert(
+      "Order Confirm",
+      `берете заказ: id# ${i.orderId}`,
+      [
+        {
+          text: "Cancel",
+          onPress: () => {
+            debug("Cancel Order Pressed");
+            jit.resetOrderNoties();
+          },
+          style: "cancel"
+        },
+        {
+          text: "OK", onPress: () => {
+            debug("OK Pressed", JSON.stringify(i));
+            //  jit.originateCallDriver(i.id);
+          }
+        }
+      ]
+    );
 
 
   const createTwoButtonAlert = (i: IDriverItem) =>
@@ -216,9 +251,10 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
           onPress: () => debug("Cancel Pressed"),
           style: "cancel"
         },
-        { text: "OK", onPress: () => {
-           debug("OK Pressed", JSON.stringify(i));
-           jit.originateCallDriver(i.id);
+        {
+          text: "OK", onPress: () => {
+            debug("OK Pressed", JSON.stringify(i));
+            jit.originateCallDriver(i.id);
           }
         }
       ]
@@ -233,7 +269,6 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
     };
 
     setRegion(tempRegion)
-    //makes the map appear to "move" to the user
     mapView.current.animateToRegion(tempRegion, 1000);
   }
 
@@ -245,7 +280,7 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
       longitudeDelta: region.longitudeDelta * 6,
     };
     setRegion(tempRegion)
-      //makes the map appear to "move" to the user
+    //makes the map appear to "move" to the user
     mapView.current.animateToRegion(tempRegion, 1000);
   }
 
@@ -298,11 +333,11 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
   // )
 
   return (
-    <View testID="DemoScreen" style={FULL}>
+    <View testID="mapcreen" style={FULL}>
       <Wallpaper />
-       <Screen style={CONTAINER}  backgroundColor={color.transparent}>
+      <Screen style={CONTAINER} backgroundColor={color.transparent}>
         <Header
-          headerTx="demoScreen.howTo"
+          headerTx="mapScreen.howTo"
           leftIcon="back"
           onLeftPress={goBack}
           style={HEADER}
@@ -322,35 +357,38 @@ export const DemoScreen = observer(withStore((props: { store: IScreenProps }) =>
             {jit.driverCache.data.map(i => {
               debug('markers::', i);
               return (
-               <Marker
-               key={i.id}
-               coordinate={{latitude: i.lat,
-                            longitude: i.lng}}
-               title={"title"}
-               description={"description"}
-               onPress={(e) => {
-                 e.stopPropagation();
-                 createTwoButtonAlert(i);
-              }}
-            />
-            )})}
+                <Marker
+                  key={i.id}
+                  coordinate={{
+                    latitude: i.lat,
+                    longitude: i.lng
+                  }}
+                  title={"title"}
+                  description={"description"}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    createTwoButtonAlert(i);
+                  }}
+                />
+              )
+            })}
           </MapView>
-                <View style={SIDE_BOX}>
-                  <TouchableOpacity
-                      onPress={() => {onPressZoomIn()}}
-                      >
-                      <View style={SIDE_BOX_ITEMS}>
-                        <Icon name='minus-circle-outline' width={32} height={32} fill='#31a04f'/>
-                      </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                      onPress={() => {onPressZoomOut()}}
-                      >
-                      <View style={SIDE_BOX_ITEMS}>
-                        <Icon name='plus-circle-outline' width={32} height={32} fill='#31a04f'/>
-                      </View>
-                  </TouchableOpacity>
-                </View>
+          <View style={SIDE_BOX}>
+            <TouchableOpacity
+              onPress={() => { onPressZoomIn() }}
+            >
+              <View style={SIDE_BOX_ITEMS}>
+                <Icon name='minus-circle-outline' width={32} height={32} fill='#31a04f' />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => { onPressZoomOut() }}
+            >
+              <View style={SIDE_BOX_ITEMS}>
+                <Icon name='plus-circle-outline' width={32} height={32} fill='#31a04f' />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
         {/* <Text style={TITLE} preset="header" tx="demoScreen.title" />
         <Text style={TAGLINE} tx="demoScreen.tagLine" />

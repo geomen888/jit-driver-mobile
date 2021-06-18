@@ -1,14 +1,12 @@
-import { observable, runInAction, ObservableMap } from 'mobx';
+import { observable, runInAction, ObservableMap, action } from 'mobx';
 import { v4 as uuid } from 'uuid';
 import { put, call, take, takeLatest, all } from 'redux-saga/effects';
 import { EventType } from '../common/enums/socket-event.type';
 import { CallStateType } from '../common/enums/ami-call.type';
 import { GankType } from '../constants';
-import { DriverSnapshot } from "../models/driver/driver";
-import { IOrderNotification } from '../models/my-account/notifications';
+import { DriverSnapshot } from "../models/driver";
 
 import Debug from 'debug';
-
 import {
   GankDataCache,
   JitDriverCache,
@@ -27,7 +25,7 @@ import {
   wssCallWith
 } from '../framework';
 import { ApiCallType, ActionWithPayload, WssCallType } from '../framework/types';
-import { RootStore } from "../models"
+import { RootStore, IOrderNotification } from "../models"
 import { LoadingSatatus } from '../common/enums/profile-loading-status.type'
 
 // import { connectWss } from '../services/wss';
@@ -38,6 +36,7 @@ const error = Debug('JitStore::error:');
 
 debug.enabled = DEBUG || false;
 error.enabled = DEBUG || false;
+
 
 export default class JitStore extends BaseStore {
   @apiTypeDef public static readonly GET_NEXT_PAGE_DATA_OF_TYPE: ApiCallType;
@@ -50,8 +49,8 @@ export default class JitStore extends BaseStore {
 
 
   public dataCache: ObservableMap<string, GankDataCache> = observable.map({});
-  public driversCache: ObservableMap<string, JitDriverCache> = observable.map({});
-  public callStateCache: ObservableMap<string, CallStateType> = observable.map({});
+  public driversCache: ObservableMap<string, JitDriverCache | { data: IOrderNotification[] }> = observable.map({});
+  public callStateCache: ObservableMap<string, CallStateType > = observable.map({});
 
   @observable
   public dataCacheLoading = false;
@@ -62,10 +61,10 @@ export default class JitStore extends BaseStore {
   @observable
   public profileCacheLoading = false;
 
-
   constructor(public key: string, public rootStore: RootStore) {
     super(key);
     this.runSaga(this.sagaMain);
+
   }
 
 
@@ -143,7 +142,8 @@ export default class JitStore extends BaseStore {
       }
       self.profileCacheLoading = true;
     });
-    const cache = (self.driversCache.get(type) as unknown) as { data: IOrderNotification[] };
+    const cache = self.driversCache.get(type) as { data: IOrderNotification[] };
+    debug('handleGetWssNotificationDriverType:cache.data::', JSON.stringify(cache.data));
 
     yield put({ type: JitStore.ON_NOTIFICATION_DRIVER_TYPE.REQUEST, payload: { type, token } });
     const sagaAction = yield take(JitStore.ON_NOTIFICATION_DRIVER_TYPE.SUCCESS);
@@ -151,16 +151,18 @@ export default class JitStore extends BaseStore {
 
     yield call<any>(runInAction, () => {
       debug('handleGetWssNotificationDriverType:res::', res);
-      cache.data = cache.data.concat(res.data || []);
+      //cache.data.push(res.data);
+      //self.driversCache.set(type, [res.data]);
       const notification: IOrderNotification = {
         id: uuid(),
         // type: DriverNotificationType.ORDER_CONFIRMATION,
         orderId: res.data?.orderId,
         created: new Date().toISOString()
       };
-      debug('handleGetWssNotificationDriverType:notification::', notification);
 
-      self.rootStore.jitStore.addProfileNotifications(notification)
+      self.driversCache.set(type, { data: [notification] })
+
+      debug('handleGetWssNotificationDriverType:notification::', notification);
       self.profileCacheLoading = false;
     });
   }
@@ -271,10 +273,6 @@ export default class JitStore extends BaseStore {
       self.driversCache.set('iam', { data: cache.data, isAuthenticated: true })
       self.profileCacheLoading = false;
     });
-    // let token: string =  self.rootStore.jitStore.getToken;
-
-    // yield put({ type: JitStore.GET_DRIVERS_ACTIVE_TYPE.REQUEST, payload: { token, type: EventType.COORDINATES } });
-
   }
 
   @apiCallWith('GET_NEXT_PAGE_DATA_OF_TYPE')

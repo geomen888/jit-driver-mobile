@@ -21,10 +21,10 @@ export class Environment {
     this.api = new Api()
   }
 
-  async setup() {
+  public async setup() {
     // allow each service to setup
     if (__DEV__) {
-      await Util.delay(1000);
+      await Util.delay(1500);
       await this.reactotron.setup();
     }
     await this.api.setup()
@@ -33,10 +33,10 @@ export class Environment {
   /**
    * Reactotron is only available in dev.
    */
-  reactotron: typeof ReactotronDev
+  public reactotron: typeof ReactotronDev
 
   /**
    * Our api.
    */
-  api: Api
+  public api: Api
 }

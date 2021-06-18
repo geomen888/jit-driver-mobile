@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { MobXProviderContext, useStores } from './root-store-context';
 
 export const Provider = ({ children, ...propsValue }) => {
-    const contextValue = useContext(MobXProviderContext)
+    const contextValue = useContext(MobXProviderContext);
     const value: any = (() => {
   return ({
     ...contextValue,
@@ -14,5 +14,5 @@ export const Provider = ({ children, ...propsValue }) => {
 }
 
 export const withStore = Component => props => {
-    return <Component {...props} store={useStores()} />;
+    return (<Component {...props} store={useStores()} />);
   };

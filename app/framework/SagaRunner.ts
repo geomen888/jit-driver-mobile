@@ -23,12 +23,12 @@ class SagaRunner {
 
   dispatch(action: ActionWithPayload): ActionWithPayload {
     const arr = this.subscribes.slice();
-    debug('dispatch:arr::', arr);
+    // debug('dispatch:arr::', arr);
     for (let i = 0, len =  arr.length; i < len; i++) {
       arr[i](action);
     }
 
-    debug('dispatch:action::', action);
+    // debug('dispatch:action::', action);
 
     return action;
   }
@@ -46,12 +46,14 @@ class SagaRunner {
 
   registerStore(key: string, store: any) {
     if (this.stores[key]) {
-      throw new Error('Error-key: ' + key);
+
+      return;
+      // throw new Error('Error-key: ' + key);
     }
     this.stores[key] = store;
   }
 
-  unRegisterStore (key: string) {
+  unRegisterStore(key: string) {
     if (this.stores[key]) {
       delete this.stores[key];
     }

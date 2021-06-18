@@ -1,5 +1,6 @@
-import { ViewStyle, TextStyle } from "react-native"
-import { color, spacing } from "../../theme"
+// tslint:disable: no-object-literal-type-assertion
+import {ViewStyle, TextStyle} from "react-native"
+import {color, spacing} from "../../theme"
 
 /**
  * All text will start off looking like this.
@@ -25,7 +26,7 @@ export const viewPresets: Record<string, ViewStyle> = {
   /**
    * A smaller piece of secondard information.
    */
-  primary: { ...BASE_VIEW, backgroundColor: color.palette.orange } as ViewStyle,
+  primary: {...BASE_VIEW, backgroundColor: color.palette.orange} as ViewStyle,
 
   /**
    * A button without extras.
@@ -39,7 +40,7 @@ export const viewPresets: Record<string, ViewStyle> = {
 }
 
 export const textPresets: Record<ButtonPresetNames, TextStyle> = {
-  primary: { ...BASE_TEXT, fontSize: 9, color: color.palette.white } as TextStyle,
+  primary: {...BASE_TEXT, fontSize: 9, color: color.palette.white} as TextStyle,
   link: {
     ...BASE_TEXT,
     color: color.text,

@@ -155,7 +155,8 @@ export default class BaseStore {
       const closeHandler = (e: WS.CloseEvent) => {
         debug(e, 'Socket is closed.');
         (async () => {
-          await (await Util.delay(25)).cancel()
+          // await (await Util.delay(25)).cancel()
+          // BaseStore.sendData({ action: EventType.DISCONNECT });
           await BaseStore.connectWss({ token });
         })()
       }
@@ -167,7 +168,7 @@ export default class BaseStore {
           debug('WebSocket message received:event::', event);
           const { data } = event;
           debug('WebSocket message received:data::', data);
-          if (Util.isJsonParsable(data) && BaseStore?.wss?.readyState === WebSocket.OPEN) {
+          if (Util.isJsonParsable(data)) {
             const { action, payload } = JSON.parse(data) as { action: EventType, payload: any };
             if (action === instance && payload) {
               handler(payload);

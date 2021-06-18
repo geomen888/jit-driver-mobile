@@ -5,5 +5,6 @@ export enum EventType {
     CALL = 'call',
     MESSAGE = 'MESSAGE',
     PING = 'PING',
+    DISCONNECT = 'disconnect',
     PONG = 'PONG'
 }
